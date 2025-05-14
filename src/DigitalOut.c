@@ -58,6 +58,10 @@ Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t pin) {
     return Digital_out;
 }
 void Digital_Out_Activate(Digital_Out_t Digital_Out) {
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin, true);
+}
+void Digital_Out_Deactivate(Digital_Out_t Digital_Out) {
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin, false);
 }
 void Digital_Out_Toggle(Digital_Out_t Digital_Out) {
     Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin);

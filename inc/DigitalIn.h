@@ -36,10 +36,7 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 /* === Public data type declarations =============================================================================== */
-typedef struct Digital_Out_s * Digital_Out_t;
-
 /* === Public variable declarations ================================================================================ */
-Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t pin);
 /* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */

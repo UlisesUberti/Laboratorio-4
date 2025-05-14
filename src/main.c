@@ -126,6 +126,7 @@ int main(void) {
     int divisor = 0;
     bool current_state, last_state = false;
     Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
+    Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_PIN);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -167,9 +168,9 @@ int main(void) {
 
     while (true) {
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT) == 0) {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
+            Digital_Out_Deactivate(led_red);
         } else {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
+            Digital_Out_Activate(led_red);
         }
 
         current_state = (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_2_GPIO, TEC_2_BIT) == 0);
