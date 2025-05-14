@@ -185,10 +185,14 @@ int main(void) {
 
         // Sentencias para controlar el led amarillo y teclas 3 y 4
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_3_GPIO, TEC_3_BIT) == 0) {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, true);
+            // Si la tecla 3 se lee entonces se prende el led amarillo
+            Digital_Out_Activate(led_yellow);
+            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, true);
         }
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_4_GPIO, TEC_4_BIT) == 0) {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, false);
+            // Si la tecla 4 se lee entonces se apaga el led amarillo
+            Digital_Out_Deactivate(led_yellow);
+            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, false);
         }
 
         // Sentencias para controlar el led verde intermitente
