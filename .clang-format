@@ -4,7 +4,6 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments:  false
 AlignConsecutiveDeclarations: false
 AlignOperands:  true
-AllowShortLambdasOnSingleLine:  false 
 AllowShortBlocksOnASingleLine:  false
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine:  false

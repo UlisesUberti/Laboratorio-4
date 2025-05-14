@@ -42,14 +42,16 @@
 
 #include "chip.h"
 #include <stdbool.h>
+#include "DigitalOut.h"
 
 /* === Macros definitions ====================================================================== */
-
-#define LED_R_PORT 2
-#define LED_R_PIN 0
-#define LED_R_FUNC SCU_MODE_FUNC4
-#define LED_R_GPIO 5
-#define LED_R_BIT 0
+// Define los parametros para configurar un pin del microcontrolador
+#define LED_R_PORT 2 // Numero del puerto del SCU, en Chip_SCU_PinMux() lo utiliza para seleccionar el pin
+// un puerto es un grupo de hasta 32 pines
+#define LED_R_PIN 0               // es el numero del pin dentro del Port
+#define LED_R_FUNC SCU_MODE_FUNC4 // Cada pin tiene diferentes funciones GPIO, UART SPI entonces le indica su funcion
+#define LED_R_GPIO 5              // num del puerto GPIO para manejarlo
+#define LED_R_BIT 0               // Numero del bit dentro del puerto GPIO
 
 #define LED_G_PORT 2
 #define LED_G_PIN 1
@@ -121,8 +123,9 @@
 
 int main(void) {
 
-    int divisor  = 0;
+    int divisor = 0;
     bool current_state, last_state = false;
+    Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -185,7 +188,7 @@ int main(void) {
         divisor++;
         if (divisor == 5) {
             divisor = 0;
-            Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, LED_3_GPIO, LED_3_BIT);
+            Digital_Out_Toggle(led_green);
         }
 
         for (int index = 0; index < 100; index++) {
