@@ -126,7 +126,8 @@ int main(void) {
     int divisor = 0;
     bool current_state, last_state = false;
     Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
-    Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_PIN);
+    Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
+    Digital_Out_t led_yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -167,18 +168,22 @@ int main(void) {
     Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_4_GPIO, TEC_4_BIT, false);
 
     while (true) {
+
+        // sentencias para controlar tecla 1 y led RGB
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT) == 0) {
-            Digital_Out_Deactivate(led_red);
+            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
         } else {
-            Digital_Out_Activate(led_red);
+            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
         }
 
+        // Sentencias para controlar la tecla 2 y el led rojo
         current_state = (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_2_GPIO, TEC_2_BIT) == 0);
         if ((current_state) && (!last_state)) {
-            Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, LED_1_GPIO, LED_1_BIT);
+            Digital_Out_Toggle(led_red);
         }
         last_state = current_state;
 
+        // Sentencias para controlar el led amarillo y teclas 3 y 4
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_3_GPIO, TEC_3_BIT) == 0) {
             Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, true);
         }
@@ -186,6 +191,7 @@ int main(void) {
             Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, false);
         }
 
+        // Sentencias para controlar el led verde intermitente
         divisor++;
         if (divisor == 5) {
             divisor = 0;
