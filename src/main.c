@@ -46,8 +46,8 @@
 
 /* === Macros definitions ====================================================================== */
 // Define los parametros para configurar un pin del microcontrolador
-#define LED_R_PORT 2 // Numero del puerto del SCU, en Chip_SCU_PinMux() lo utiliza para seleccionar el pin
 // un puerto es un grupo de hasta 32 pines
+#define LED_R_PORT 2              // Numero del puerto del SCU, en Chip_SCU_PinMux() lo utiliza para seleccionar el pin
 #define LED_R_PIN 0               // es el numero del pin dentro del Port
 #define LED_R_FUNC SCU_MODE_FUNC4 // Cada pin tiene diferentes funciones GPIO, UART SPI entonces le indica su funcion
 #define LED_R_GPIO 5              // num del puerto GPIO para manejarlo
@@ -128,6 +128,9 @@ int main(void) {
     Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
     Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
     Digital_Out_t led_yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
+    // Digital_Out_t led_R = Digital_Out_Create(LED_R_GPIO, LED_R_BIT);
+    // Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
+    Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -171,9 +174,11 @@ int main(void) {
 
         // sentencias para controlar tecla 1 y led RGB
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT) == 0) {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
+            Digital_Out_Activate(led_B);
+            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
         } else {
-            Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
+            Digital_Out_Deactivate(led_B);
+            //  Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
         }
 
         // Sentencias para controlar la tecla 2 y el led rojo
@@ -187,12 +192,10 @@ int main(void) {
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_3_GPIO, TEC_3_BIT) == 0) {
             // Si la tecla 3 se lee entonces se prende el led amarillo
             Digital_Out_Activate(led_yellow);
-            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, true);
         }
         if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_4_GPIO, TEC_4_BIT) == 0) {
             // Si la tecla 4 se lee entonces se apaga el led amarillo
             Digital_Out_Deactivate(led_yellow);
-            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, false);
         }
 
         // Sentencias para controlar el led verde intermitente
