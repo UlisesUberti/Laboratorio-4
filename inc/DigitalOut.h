@@ -46,10 +46,10 @@ typedef struct Digital_Out_s * Digital_Out_t;
  * @brief Funcion para crear una salida digital
  *
  * @param port Puerto fisico
- * @param pin pin fisico
+ * @param bit pin fisico
  * @return Digital_Out_t
  */
-Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t pin);
+Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t bit);
 
 // necesito una funcion para activar la salida digital pero no devuelve nada
 /**

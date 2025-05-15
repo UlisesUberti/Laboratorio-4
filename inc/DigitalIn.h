@@ -36,8 +36,55 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 /* === Public data type declarations =============================================================================== */
+
+// Declaro como tipo de dato el puntero hacia la estructura que contiene los parametros de las entradas digitales
+typedef struct Digital_In_s * Digital_In_t;
+
 /* === Public variable declarations ================================================================================ */
+
 /* === Public function declarations ================================================================================ */
+
+// Creamos una funcuion que cree una entrada sabiendo que encesitan como parametros port pin e inverted
+/** @brief Funcion para crear una entrada digital
+ * @param port puerto de la entrada digital
+ * @param bit bit del puerto
+ * @return puntero a estructura
+ */
+Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit);
+
+// Creamos una funcion para obtener el valor de la entrada
+/**
+ * @brief Funcion para obtener el estado de la entrada digital
+ *
+ * @return true
+ * @return false
+ */
+bool Digital_In_GetState(Digital_In_t);
+
+// Creamos una funcion para saber si cambio el estado de la entrada o no
+/**
+ * @brief Funcion para determinar si una entrada digital estaba activa
+ *
+ * @return true
+ * @return false
+ */
+bool Digital_In_Was_Activated(Digital_In_t);
+
+/**
+ * @brief Funcion para determinar si el estado anterior de una señal fue desactivado
+ *
+ * @return true
+ * @return false
+ */
+bool Digital_In_Was_Deactivated(Digital_In_t);
+
+/**
+ * @brief Funcion para determianr si cambio ele estado de la señal
+ *
+ * @return true
+ * @return false
+ */
+bool Digital_In_Was_Changed(Digital_In_t);
 
 /* === End of conditional blocks =================================================================================== */
 

@@ -29,10 +29,37 @@ SPDX-License-Identifier: MIT
 #include <string.h>
 #include <stdbool.h>
 #include "DigitalIn.h"
+#include "chip.h"
 /* === Macros definitions ========================================================================================== */
 
 /* === Private data type declarations ============================================================================== */
+struct Digital_In_s {
+    uint8_t port;
+    uint8_t bit;
+    bool activo;
+};
+
 /* === Private function declarations =============================================================================== */
+Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit) {
+    Digital_In_t Digital_In = malloc(sizeof(struct Digital_In_s));
+    if (Digital_In != NULL) {
+        Digital_In->port = port;
+        Digital_In->bit = bit;
+    }
+}
+
+bool Digital_In_GetState(Digital_In_t Digital_In) {
+    return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, Digital_In->port, Digital_In->bit);
+}
+
+bool Digital_In_Was_Activated(Digital_In_t) {
+}
+
+bool Digital_In_Was_Deactivated(Digital_In_t) {
+}
+
+bool Digital_In_Was_Changed(Digital_In_t) {
+}
 
 /* === Private variable definitions ================================================================================ */
 

@@ -43,6 +43,7 @@
 #include "chip.h"
 #include <stdbool.h>
 #include "DigitalOut.h"
+#include "DigitalIn.h"
 
 /* === Macros definitions ====================================================================== */
 // Define los parametros para configurar un pin del microcontrolador
@@ -125,12 +126,16 @@ int main(void) {
 
     int divisor = 0;
     bool current_state, last_state = false;
+
     Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
     Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
     Digital_Out_t led_yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
     // Digital_Out_t led_R = Digital_Out_Create(LED_R_GPIO, LED_R_BIT);
-    // Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
-    Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
+    Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
+    // Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
+
+    // Defino las entradas digitales
+    Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -173,12 +178,14 @@ int main(void) {
     while (true) {
 
         // sentencias para controlar tecla 1 y led RGB
-        if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT) == 0) {
-            Digital_Out_Activate(led_B);
-            // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
+
+        if (Digital_In_GetState(SW1) == 0) {
+
+            Digital_Out_Activate(led_G);
+
         } else {
-            Digital_Out_Deactivate(led_B);
-            //  Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
+
+            Digital_Out_Deactivate(led_G);
         }
 
         // Sentencias para controlar la tecla 2 y el led rojo
