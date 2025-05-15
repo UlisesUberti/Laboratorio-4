@@ -136,6 +136,7 @@ int main(void) {
 
     // Defino las entradas digitales
     Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT);
+    Digital_In_t SW2 = Digital_In_Create(TEC_2_GPIO, TEC_3_BIT);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -189,7 +190,7 @@ int main(void) {
         }
 
         // Sentencias para controlar la tecla 2 y el led rojo
-        current_state = (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_2_GPIO, TEC_2_BIT) == 0);
+        current_state = (Digital_In_GetState(SW2) == 0);
         if ((current_state) && (!last_state)) {
             Digital_Out_Toggle(led_red);
         }
