@@ -47,29 +47,35 @@ struct Digital_Out_s {
 
 /* === Private function definitions ================================================================================ */
 
-// Creo una salida digital (Creo el objeto)
-
 Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t pin) {
+
     Digital_Out_t Digital_out = malloc(sizeof(struct Digital_Out_s));
+
     if (Digital_out != NULL) {
         Digital_out->pin = pin;
         Digital_out->port = port;
-        // Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
-        // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
+        // Funciones del fabricante para definirla como salida y para asignarle un estado inicial (false==0)
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, Digital_out->port, Digital_out->pin, true);
+        Chip_GPIO_SetPinState(LPC_GPIO_PORT, Digital_out->port, Digital_out->pin, false);
     }
+
     return Digital_out;
 }
+
 void Digital_Out_Activate(Digital_Out_t Digital_Out) {
+    // Funcion del fabricante que activa la salida
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin, true);
 }
+
 void Digital_Out_Deactivate(Digital_Out_t Digital_Out) {
+    // Funcion del fabricante para desactivar una salida
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin, false);
 }
+
 void Digital_Out_Toggle(Digital_Out_t Digital_Out) {
     Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin);
 }
 
-// Ahora utilizo funciones para ver que puedo hacer con el objeto
 /* === Public function implementation ============================================================================== */
 
 /* === End of documentation ======================================================================================== */

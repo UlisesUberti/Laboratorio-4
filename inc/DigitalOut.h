@@ -20,8 +20,8 @@ SPDX-License-Identifier: MIT
 #ifndef DIGITALOUT_H_
 #define DIGITALOUT_H_
 
-/** @file alumno.h
- ** @brief
+/** @file DigitalOut.h
+ ** @brief Codigo Digital Out.h
  @author Uberti, Ulises Leandro
  **/
 
@@ -36,12 +36,11 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 /* === Public data type declarations =============================================================================== */
+
 typedef struct Digital_Out_s * Digital_Out_t;
 
 /* === Public variable declarations ================================================================================ */
 
-// Segun el fabricante las entradas y salidas digitales necesitan 5 parametros para poder configurarlas
-// 2/5 son para funcionar y 3/5 son para una unica configuracion inicial
 /**
  * @brief Funcion para crear una salida digital
  *
@@ -51,7 +50,6 @@ typedef struct Digital_Out_s * Digital_Out_t;
  */
 Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t bit);
 
-// necesito una funcion para activar la salida digital pero no devuelve nada
 /**
  * @brief Funcion para activar la salida digital
  * No retorna nada, solo activa la salida
@@ -59,9 +57,13 @@ Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t bit);
  */
 void Digital_Out_Activate(Digital_Out_t Digital_Out);
 
+/**
+ * @brief Funcion para desactivar la salida digital
+ * No retorna nada, solo desactiva la salida
+ * @param Digital_Out Puntero a la estructura con los parametros de la salida
+ */
 void Digital_Out_Deactivate(Digital_Out_t Digital_Out);
 
-// una funcion que invierta el estado logico del pin GPIO
 /**
  * @brief Funcion para cambiar el estado logico de una salida digital
  *
