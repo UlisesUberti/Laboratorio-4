@@ -54,6 +54,8 @@ Digital_Out_t Digital_Out_Create(uint8_t port, uint8_t pin) {
     if (Digital_out != NULL) {
         Digital_out->pin = pin;
         Digital_out->port = port;
+        // Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
+        // Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
     }
     return Digital_out;
 }
