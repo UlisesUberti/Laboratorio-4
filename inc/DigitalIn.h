@@ -40,6 +40,12 @@ extern "C" {
 // Declaro como tipo de dato el puntero hacia la estructura que contiene los parametros de las entradas digitales
 typedef struct Digital_In_s * Digital_In_t;
 
+typedef enum Digital_States_e {
+    Input_Was_Deactiveted = -1,
+    Input_Was_Activeted = 1,
+    Input_NOT_CHANGE = 0,
+} Digital_States_t;
+
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
@@ -50,7 +56,7 @@ typedef struct Digital_In_s * Digital_In_t;
  * @param bit bit del puerto
  * @return puntero a estructura
  */
-Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit);
+Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit, bool inverted);
 
 // Creamos una funcion para obtener el valor de la entrada
 /**
@@ -59,7 +65,7 @@ Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit);
  * @return true
  * @return false
  */
-bool Digital_In_GetState(Digital_In_t);
+bool Digital_In_GetState(Digital_In_t Digital_In);
 
 // Creamos una funcion para saber si cambio el estado de la entrada o no
 /**
@@ -68,7 +74,7 @@ bool Digital_In_GetState(Digital_In_t);
  * @return true
  * @return false
  */
-bool Digital_In_Was_Activated(Digital_In_t);
+bool Digital_In_Was_Activated(Digital_In_t Digital_In);
 
 /**
  * @brief Funcion para determinar si el estado anterior de una señal fue desactivado
@@ -76,7 +82,7 @@ bool Digital_In_Was_Activated(Digital_In_t);
  * @return true
  * @return false
  */
-bool Digital_In_Was_Deactivated(Digital_In_t);
+bool Digital_In_Was_Deactivated(Digital_In_t Digital_In);
 
 /**
  * @brief Funcion para determianr si cambio ele estado de la señal
@@ -84,7 +90,7 @@ bool Digital_In_Was_Deactivated(Digital_In_t);
  * @return true
  * @return false
  */
-bool Digital_In_Was_Changed(Digital_In_t);
+Digital_States_t Digital_In_Was_Changed(Digital_In_t Digital_In);
 
 /* === End of conditional blocks =================================================================================== */
 

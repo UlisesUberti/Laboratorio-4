@@ -135,8 +135,10 @@ int main(void) {
     // Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
 
     // Defino las entradas digitales
-    Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT);
-    Digital_In_t SW2 = Digital_In_Create(TEC_2_GPIO, TEC_3_BIT);
+    Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT, false);
+    Digital_In_t SW2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
+    Digital_In_t SW3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
+    Digital_In_t SW4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
 
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
@@ -197,11 +199,11 @@ int main(void) {
         last_state = current_state;
 
         // Sentencias para controlar el led amarillo y teclas 3 y 4
-        if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_3_GPIO, TEC_3_BIT) == 0) {
+        if (Digital_In_GetState(SW3) == 0) {
             // Si la tecla 3 se lee entonces se prende el led amarillo
             Digital_Out_Activate(led_yellow);
         }
-        if (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_4_GPIO, TEC_4_BIT) == 0) {
+        if (Digital_In_GetState(SW4) == 0) {
             // Si la tecla 4 se lee entonces se apaga el led amarillo
             Digital_Out_Deactivate(led_yellow);
         }

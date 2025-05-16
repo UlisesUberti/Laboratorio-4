@@ -36,29 +36,80 @@ SPDX-License-Identifier: MIT
 struct Digital_In_s {
     uint8_t port;
     uint8_t bit;
-    bool activo;
+    bool inverted;
+    bool last_state;
 };
 
 /* === Private function declarations =============================================================================== */
-Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit) {
+
+// Creo la entrada digital y le asigno valor a sus parametros
+Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit, bool inverted) {
     Digital_In_t Digital_In = malloc(sizeof(struct Digital_In_s));
     if (Digital_In != NULL) {
+        // puerto
         Digital_In->port = port;
+        // bit
         Digital_In->bit = bit;
+        // logica inverta (TRUE) o directa (FALSE)
+        Digital_In->inverted = false;
+        // Defino su esatdo anterior al construirla --> en 0
+        Digital_In->last_state = false;
+        // Retorno puntero a la estructura
+        return Digital_In;
     }
+    return Digital_In;
 }
 
+// Funcion para obtener el estado de la entrada
 bool Digital_In_GetState(Digital_In_t Digital_In) {
-    return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, Digital_In->port, Digital_In->bit);
+
+    // Leo la entrada con la funcion del fabricante
+    bool state = Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, Digital_In->port, Digital_In->bit);
+
+    // Si tiene logica invertida entonces inverted es TRUE e invierte el estado
+    if (Digital_In->inverted) {
+        state = !state;
+    }
+
+    // Retorna el estado
+    return state;
 }
 
-bool Digital_In_Was_Activated(Digital_In_t) {
+// bool Digital_In_Was_Activated(Digital_In_t) {
+// }
+
+// bool Digital_In_Was_Deactivated(Digital_In_t) {
+// }
+
+Digital_States_t Digital_In_Was_Changed(Digital_In_t Digital_In) {
+
+    // Defino un tipo de dato enum con el valor de "No cambio"
+    Digital_States_t result = Input_NOT_CHANGE;
+    // Defino un tipo de dato bool que me diga si esta en alto (TRUE) o bajo(False)
+    bool state = Digital_In_GetState(Digital_In);
+
+    // Si estado esta en 1 y last_state en 0 --> Cambio a alto
+    if (state && !Digital_In->last_state) {
+        result = Input_Was_Activeted;
+    }
+    // Si el estado estaba en bajo y la salida en Alto -->
+    else if (!state && Digital_In->last_state) {
+        result = Input_Was_Deactiveted;
+    }
+    // Actualizo el ultimo estado
+    Digital_In->last_state = state;
+    return result;
 }
 
-bool Digital_In_Was_Deactivated(Digital_In_t) {
+// Funcion para determinar si estaba desactivada:
+bool Digital_In_Was_Activated(Digital_In_t Digital_In) {
+    // comparacion que returna true o false
+    // Si la funcion que determina el estado anterior dice que la entrada fue activada --> TRUE
+    return Input_Was_Activeted == Digital_In_Was_Changed(Digital_In);
 }
 
-bool Digital_In_Was_Changed(Digital_In_t) {
+bool Digital_In_Was_Deactivated(Digital_In_t Digital_In) {
+    return Input_Was_Deactiveted == Digital_In_Was_Changed(Digital_In);
 }
 
 /* === Private variable definitions ================================================================================ */
