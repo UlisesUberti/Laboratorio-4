@@ -30,7 +30,10 @@ SPDX-License-Identifier: MIT
 #include <stdbool.h>
 #include "DigitalIn.h"
 #include "chip.h"
+#include "bsp.h"
 /* === Macros definitions ========================================================================================== */
+
+// Aqui se ubican los define del main
 
 /* === Private data type declarations ============================================================================== */
 
@@ -41,7 +44,18 @@ SPDX-License-Identifier: MIT
 /* === Public variable definitions ================================================================================= */
 
 /* === Private function definitions ================================================================================ */
-
+board_t Board_Create() {
+    // necesito una variable con 8 direcciones de memoria para crear 8 objetos
+    // son los 4 leds y las 4 teclas
+    // un struct necesitara almacenar esas 8 diferencias
+    // es para prohibir que se cambie el valor de cada objeto en sus campos
+    struct board_s * board = malloc(sizeof(board));
+    if (board != NULL) {
+        /* code */
+        // board->led_red = Digital_Out_Create(...); creo los 8 objertos
+    }
+    return board;
+}
 /* === Public function implementation ============================================================================== */
 
 /* === End of documentation ======================================================================================== */

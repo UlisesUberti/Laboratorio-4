@@ -27,6 +27,9 @@ SPDX-License-Identifier: MIT
 
 /* === Headers files inclusions ==================================================================================== */
 #include <stdint.h>
+#include "DigitalIn.h"
+#include "DigitalOut.h"
+
 /* === Header for C++ compatibility ================================================================================ */
 
 #ifdef __cplusplus
@@ -36,11 +39,17 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 /* === Public data type declarations =============================================================================== */
+typedef struct board_s {
 
+    // funciones para crear los leds
+    //  Digital_Out_t led_red ; ... y asi
+    //  Con als entradas digitales lo mismo
+} const * board_t; // retorna un puntero con estructura constante --> no puedo cambiar
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
+board_t Board_Create(void);
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus
