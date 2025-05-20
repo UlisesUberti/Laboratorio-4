@@ -44,68 +44,9 @@
 #include <stdbool.h>
 #include "DigitalOut.h"
 #include "DigitalIn.h"
+#include "EDU-CIAA.h"
 
 /* === Macros definitions ====================================================================== */
-
-#define LED_R_PORT 2
-#define LED_R_PIN 0
-#define LED_R_FUNC SCU_MODE_FUNC4
-#define LED_R_GPIO 5
-#define LED_R_BIT 0
-
-#define LED_G_PORT 2
-#define LED_G_PIN 1
-#define LED_G_FUNC SCU_MODE_FUNC4
-#define LED_G_GPIO 5
-#define LED_G_BIT 1
-
-#define LED_B_PORT 2
-#define LED_B_PIN 2
-#define LED_B_FUNC SCU_MODE_FUNC4
-#define LED_B_GPIO 5
-#define LED_B_BIT 2
-
-#define LED_1_PORT 2
-#define LED_1_PIN 10
-#define LED_1_FUNC SCU_MODE_FUNC0
-#define LED_1_GPIO 0
-#define LED_1_BIT 14
-
-#define LED_2_PORT 2
-#define LED_2_PIN 11
-#define LED_2_FUNC SCU_MODE_FUNC0
-#define LED_2_GPIO 1
-#define LED_2_BIT 11
-
-#define LED_3_PORT 2
-#define LED_3_PIN 12
-#define LED_3_FUNC SCU_MODE_FUNC0
-#define LED_3_GPIO 1
-#define LED_3_BIT 12
-
-#define TEC_1_PORT 1
-#define TEC_1_PIN 0
-#define TEC_1_FUNC SCU_MODE_FUNC0
-#define TEC_1_GPIO 0
-#define TEC_1_BIT 4
-
-#define TEC_2_PORT 1
-#define TEC_2_PIN 1
-#define TEC_2_FUNC SCU_MODE_FUNC0
-#define TEC_2_GPIO 0
-#define TEC_2_BIT 8
-
-#define TEC_3_PORT 1
-#define TEC_3_PIN 2
-#define TEC_3_FUNC SCU_MODE_FUNC0
-#define TEC_3_GPIO 0
-#define TEC_3_BIT 9
-
-#define TEC_4_PORT 1
-#define TEC_4_PIN 6
-#define TEC_4_FUNC SCU_MODE_FUNC0
-#define TEC_4_GPIO 1
-#define TEC_4_BIT 9
 
 /* === Private data type declarations ========================================================== */
 
@@ -131,7 +72,7 @@ int main(void) {
 
     // Defino el led verde del RGB
     Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
-    Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
+    Digital_Out_t Led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
 
     // Defino el led azul del RGB
     Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
@@ -141,66 +82,66 @@ int main(void) {
 
     // Defino el LED 1 de la placa (Rojo)
     Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
-    Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
+    Digital_Out_t Led_Red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
 
     // Defino el LED 2 de la placa (Amarillo)
     Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
-    Digital_Out_t led_yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
+    Digital_Out_t Led_Yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
 
     // Defino el LED 3 de la placa (Verde)
     Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
-    Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
+    Digital_Out_t Led_Green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
 
     /******************/
 
     // Defino la entrada digital de la TECLA 1
     Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
-    Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT, false);
+    Digital_In_t Sw1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT, false);
 
     // Defino la entrada digital de la TECLA 2
     Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
-    Digital_In_t SW2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
+    Digital_In_t Sw2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
 
     // Defino la entrada digital de la TECLA 3
     Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
-    Digital_In_t SW3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
+    Digital_In_t Sw3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
 
     // Defino la entrada digital de la TECLA 4
     Chip_SCU_PinMuxSet(TEC_4_PORT, TEC_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_4_FUNC);
-    Digital_In_t SW4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
+    Digital_In_t Sw4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
 
     // loop de programa
     while (true) {
 
         // Si se activa la TECLA 1 entonces se prende el LED RGB
-        if (Digital_In_GetState(SW1) == 0) {
+        if (Digital_In_GetState(Sw1) == 0) {
 
-            Digital_Out_Activate(led_G);
+            Digital_Out_Activate(Led_G);
 
         } else {
             // Caso contrario se desactiva
-            Digital_Out_Deactivate(led_G);
+            Digital_Out_Deactivate(Led_G);
         }
 
         // Si la TECLA 2 estaba desactivada y se activa entonces cambia el estado del LED 1
-        if (Digital_In_Was_Deactivated(SW2)) {
-            Digital_Out_Toggle(led_red);
+        if (Digital_In_Was_Deactivated(Sw2)) {
+            Digital_Out_Toggle(Led_Red);
         }
 
         // Si la TECLA 3 se activa entonces se activa el LED 2
-        if (Digital_In_GetState(SW3) == 0) {
-            Digital_Out_Activate(led_yellow);
+        if (Digital_In_GetState(Sw3) == 0) {
+            Digital_Out_Activate(Led_Yellow);
         }
         // Si la TECLA 4 se activa entonces se desactiva el LED 2
-        if (Digital_In_GetState(SW4) == 0) {
-            Digital_Out_Deactivate(led_yellow);
+        if (Digital_In_GetState(Sw4) == 0) {
+            Digital_Out_Deactivate(Led_Yellow);
         }
 
         // El LED 3 se activa y desactiva t[s]
         divisor++;
         if (divisor == 5) {
             divisor = 0;
-            Digital_Out_Toggle(led_green);
+            Digital_Out_Toggle(Led_Green);
         }
 
         for (int index = 0; index < 100; index++) {

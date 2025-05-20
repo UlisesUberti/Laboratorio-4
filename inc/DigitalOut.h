@@ -37,6 +37,9 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 
+/**
+ * @brief Struct Digital_Out_s y puntero a la estructura Digital_Out_t
+ */
 typedef struct Digital_Out_s * Digital_Out_t;
 
 /* === Public variable declarations ================================================================================ */
