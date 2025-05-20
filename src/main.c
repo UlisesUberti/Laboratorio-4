@@ -46,13 +46,12 @@
 #include "DigitalIn.h"
 
 /* === Macros definitions ====================================================================== */
-// Define los parametros para configurar un pin del microcontrolador
-// un puerto es un grupo de hasta 32 pines
-#define LED_R_PORT 2              // Numero del puerto del SCU, en Chip_SCU_PinMux() lo utiliza para seleccionar el pin
-#define LED_R_PIN 0               // es el numero del pin dentro del Port
-#define LED_R_FUNC SCU_MODE_FUNC4 // Cada pin tiene diferentes funciones GPIO, UART SPI entonces le indica su funcion
-#define LED_R_GPIO 5              // num del puerto GPIO para manejarlo
-#define LED_R_BIT 0               // Numero del bit dentro del puerto GPIO
+
+#define LED_R_PORT 2
+#define LED_R_PIN 0
+#define LED_R_FUNC SCU_MODE_FUNC4
+#define LED_R_GPIO 5
+#define LED_R_BIT 0
 
 #define LED_G_PORT 2
 #define LED_G_PIN 1
@@ -125,103 +124,79 @@
 int main(void) {
 
     int divisor = 0;
-    bool current_state, last_state = false;
 
-    Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
+    // Defino el led rojo del RGB
+    Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
+    // Digital_Out_t led_R = Digital_Out_Create(LED_R_GPIO, LED_R_BIT);
+
+    // Defino el led verde del RGB
+    Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
+    Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
+
+    // Defino el led azul del RGB
+    Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
+    // Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
+
+    /******************/
+
+    // Defino el LED 1 de la placa (Rojo)
+    Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
     Digital_Out_t led_red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
+
+    // Defino el LED 2 de la placa (Amarillo)
+    Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
     Digital_Out_t led_yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
 
-    // Defino las entradas digitales
+    // Defino el LED 3 de la placa (Verde)
+    Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
+    Digital_Out_t led_green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
+
+    /******************/
+
+    // Defino la entrada digital de la TECLA 1
+    Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
     Digital_In_t SW1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT, false);
+
+    // Defino la entrada digital de la TECLA 2
+    Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
     Digital_In_t SW2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
+
+    // Defino la entrada digital de la TECLA 3
+    Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
     Digital_In_t SW3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
+
+    // Defino la entrada digital de la TECLA 4
+    Chip_SCU_PinMuxSet(TEC_4_PORT, TEC_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_4_FUNC);
     Digital_In_t SW4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
 
-    Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
-    // Estas dos funciones se reemplazan por el create de salida digital
-    // Set Pin state crea la salida digital y la pone en bajo por defecto
-    // Digital_Out_t led_R = Digital_Out_Create(LED_R_GPIO, LED_R_BIT);
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, false);
-    // SerPinDir le dice que es salida
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, true);
-
-    Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
-    // Reemplazar
-    Digital_Out_t led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_G_GPIO, LED_G_BIT, false);
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_G_GPIO, LED_G_BIT, true);
-
-    Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
-    // Reemplazar
-    //  Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, false);
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_B_GPIO, LED_B_BIT, true);
-
-    /******************/
-    Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
-    //
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_1_GPIO, LED_1_BIT, false);
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_1_GPIO, LED_1_BIT, true);
-
-    Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
-    //
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, false);
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, true);
-
-    Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
-    //
-    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_3_GPIO, LED_3_BIT, false);
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, LED_3_GPIO, LED_3_BIT, true);
-
-    /******************/
-    Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
-    // Esta funcion debe estar dentro del create_In
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT, false);
-
-    Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
-    //
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_2_GPIO, TEC_2_BIT, false);
-
-    Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
-    //
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_3_GPIO, TEC_3_BIT, false);
-
-    Chip_SCU_PinMuxSet(TEC_4_PORT, TEC_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_4_FUNC);
-    //
-    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_4_GPIO, TEC_4_BIT, false);
-
+    // loop de programa
     while (true) {
 
-        // sentencias para controlar tecla 1 y led RGB
-
+        // Si se activa la TECLA 1 entonces se prende el LED RGB
         if (Digital_In_GetState(SW1) == 0) {
 
             Digital_Out_Activate(led_G);
 
         } else {
-
+            // Caso contrario se desactiva
             Digital_Out_Deactivate(led_G);
         }
 
-        // Sentencias para controlar la tecla 2 y el led rojo
-        // Deberia utilizar la funcion para detectar flancos
-        current_state = (Digital_In_GetState(SW2) == 0);
-        if ((current_state) && (!last_state)) {
+        // Si la TECLA 2 estaba desactivada y se activa entonces cambia el estado del LED 1
+        if (Digital_In_Was_Deactivated(SW2)) {
             Digital_Out_Toggle(led_red);
         }
-        last_state = current_state;
 
-        // Sentencias para controlar el led amarillo y teclas 3 y 4
+        // Si la TECLA 3 se activa entonces se activa el LED 2
         if (Digital_In_GetState(SW3) == 0) {
-            // Si la tecla 3 se lee entonces se prende el led amarillo
             Digital_Out_Activate(led_yellow);
         }
+        // Si la TECLA 4 se activa entonces se desactiva el LED 2
         if (Digital_In_GetState(SW4) == 0) {
-            // Si la tecla 4 se lee entonces se apaga el led amarillo
             Digital_Out_Deactivate(led_yellow);
         }
 
-        // Sentencias para controlar el led verde intermitente
+        // El LED 3 se activa y desactiva t[s]
         divisor++;
         if (divisor == 5) {
             divisor = 0;

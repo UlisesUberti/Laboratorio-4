@@ -33,6 +33,14 @@ SPDX-License-Identifier: MIT
 /* === Macros definitions ========================================================================================== */
 
 /* === Private data type declarations ============================================================================== */
+
+/**
+ * @brief Definicion de una estructura con los parametros de una Entrada Digital
+ * @param port Puerto GPIO
+ * @param bit bit del puerto
+ * @param inverted Logica Invertida o Directa
+ * @param last_state Ultimo estado (Activo o Desactivo)
+ */
 struct Digital_In_s {
     uint8_t port;
     uint8_t bit;
@@ -42,28 +50,23 @@ struct Digital_In_s {
 
 /* === Private function declarations =============================================================================== */
 
-// Creo la entrada digital y le asigno valor a sus parametros
 Digital_In_t Digital_In_Create(uint8_t port, uint8_t bit, bool inverted) {
+
     Digital_In_t Digital_In = malloc(sizeof(struct Digital_In_s));
+
     if (Digital_In != NULL) {
-        // puerto
         Digital_In->port = port;
-        // bit
         Digital_In->bit = bit;
-        // logica inverta (TRUE) o directa (FALSE)
         Digital_In->inverted = false;
-        // Defino su esatdo anterior al construirla --> en 0
         Digital_In->last_state = false;
-        //
-        // Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, TEC_1_GPIO, TEC_1_BIT, false);
-        //
-        // Retorno puntero a la estructura
+        // Funcion del fabricante que la define que como entrada
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, Digital_In->port, Digital_In->bit, false);
         return Digital_In;
     }
+
     return Digital_In;
 }
 
-// Funcion para obtener el estado de la entrada
 bool Digital_In_GetState(Digital_In_t Digital_In) {
 
     // Leo la entrada con la funcion del fabricante
@@ -74,20 +77,14 @@ bool Digital_In_GetState(Digital_In_t Digital_In) {
         state = !state;
     }
 
-    // Retorna el estado
     return state;
 }
 
-// bool Digital_In_Was_Activated(Digital_In_t) {
-// }
-
-// bool Digital_In_Was_Deactivated(Digital_In_t) {
-// }
-
 Digital_States_t Digital_In_Was_Changed(Digital_In_t Digital_In) {
 
-    // Defino un tipo de dato enum con el valor de "No cambio"
+    // Defino un tipo de dato enum con el estado de "No cambio"
     Digital_States_t result = Input_NOT_CHANGE;
+
     // Defino un tipo de dato bool que me diga si esta en alto (TRUE) o bajo(False)
     bool state = Digital_In_GetState(Digital_In);
 
@@ -101,13 +98,11 @@ Digital_States_t Digital_In_Was_Changed(Digital_In_t Digital_In) {
     }
     // Actualizo el ultimo estado
     Digital_In->last_state = state;
+
     return result;
 }
 
-// Funcion para determinar si estaba desactivada:
 bool Digital_In_Was_Activated(Digital_In_t Digital_In) {
-    // comparacion que returna true o false
-    // Si la funcion que determina el estado anterior dice que la entrada fue activada --> TRUE
     return Input_Was_Activeted == Digital_In_Was_Changed(Digital_In);
 }
 
