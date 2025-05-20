@@ -61,12 +61,18 @@ typedef struct Board_s {
     // funciones para crear los leds
     //  Digital_Out_t led_red ; ... y asi
     //  Con las entradas digitales lo mismo
-} const * Board_t; // retorna un puntero a estructura constante --> no puedo cambiar sus campos
+} const * Board_t;
+// retorna un puntero a estructura constante --> no puedo cambiar sus campos
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
+/**
+ * @brief Funcion para crear los objetos correspondientes de la placa EDU-CIAA
+ *
+ * @return Board_t puntero a la estructura constante que contiene los parametros
+ */
 Board_t Board_Create(void);
 
 /* === End of conditional blocks =================================================================================== */
