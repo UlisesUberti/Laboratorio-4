@@ -37,8 +37,16 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 
+/**
+ * @brief Digital_In_t es un puntero a la estructura Digital_In_s
+ *
+ */
 typedef struct Digital_In_s * Digital_In_t;
 
+/**
+ * @brief Digital_States_e es un enum con 3 estados posibles
+ *
+ */
 typedef enum Digital_States_e {
     Input_Was_Deactiveted = -1,
     Input_Was_Activeted = 1,

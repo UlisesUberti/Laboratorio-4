@@ -37,28 +37,28 @@ SPDX-License-Identifier: MIT
 
 /* === Macros definitions ========================================================================================== */
 
-// Aqui se ubican los define del main
-
 /* === Private data type declarations ============================================================================== */
-// static Board_t Board;
+
 /* === Private function declarations =============================================================================== */
 
 /* === Private variable definitions ================================================================================ */
-// static Board_t Board;
+
 /* === Public variable definitions ================================================================================= */
 
 /* === Private function definitions ================================================================================ */
 
 Board_t Board_Create() {
-    // necesito una variable con 8 direcciones de memoria para crear 8 objetos
-    // son los 4 leds y las 4 teclas
-    // un struct necesitara almacenar esas 8 diferencias
-    // es para prohibir que se cambie el valor de cada objeto en sus campos
 
     struct Board_s * Board = malloc(sizeof(struct Board_s));
     if (Board != NULL) {
 
-        // Creo las salidas digitales
+        // Defino las salidas digitales
+
+        // Led Rojo (RGB)
+        Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
+
+        // Led Verde (RGB)
+        Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
 
         // Led Azul (RGB)
         Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
@@ -76,7 +76,7 @@ Board_t Board_Create() {
         Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
         Board->Led_Green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
 
-        // Creo las entradas digitales
+        // Defino las entradas digitales
 
         // Tecla 1
         Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
@@ -87,7 +87,7 @@ Board_t Board_Create() {
         Board->Sw2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
 
         // Tecla 3
-        Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
+        Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
         Board->Sw3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
 
         // Tecla 4
@@ -95,7 +95,7 @@ Board_t Board_Create() {
         Board->Sw4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
     }
 
-    // Retorno el puntero a la estructura que almacena los objetos creados
+    // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;
 }
 

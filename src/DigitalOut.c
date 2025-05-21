@@ -33,6 +33,11 @@ SPDX-License-Identifier: MIT
 /* === Macros definitions ========================================================================================== */
 
 /* === Private data type declarations ============================================================================== */
+
+/**
+ * @brief Digital_Out_s es una estructura con los parametros de la salida
+ *
+ */
 struct Digital_Out_s {
     uint8_t port;
     uint8_t pin;

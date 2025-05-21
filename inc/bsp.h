@@ -42,27 +42,23 @@ extern "C" {
 
 /**
  * @brief Struct que contiene los punteros a las estructuras de las entradas y salidas digitales
- *
+ * Board_t es un puntero a constante por lo que no puede cambiarse el contenido de la estructura
  */
 typedef struct Board_s {
 
-    // Declaro las salidas digitales
+    // Declaro los punteros a las salidas digitales
     Digital_Out_t Led_B;
     Digital_Out_t Led_Red;
     Digital_Out_t Led_Green;
     Digital_Out_t Led_Yellow;
 
-    // Declaro las entradas digitales
+    // Declaro los punteros a las entradas digitales
     Digital_In_t Sw1;
     Digital_In_t Sw2;
     Digital_In_t Sw3;
     Digital_In_t Sw4;
 
-    // funciones para crear los leds
-    //  Digital_Out_t led_red ; ... y asi
-    //  Con las entradas digitales lo mismo
 } const * Board_t;
-// retorna un puntero a estructura constante --> no puedo cambiar sus campos
 
 /* === Public variable declarations ================================================================================ */
 

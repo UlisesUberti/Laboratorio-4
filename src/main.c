@@ -32,15 +32,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \brief Simple sample of use LPC HAL gpio functions
- **
- ** \addtogroup samples Sample projects
- ** \brief Sample projects to use as a starting point
+/** @brief Codigo fuente del archivo main
+ ** @author Uberti, Ulises Leandro
+ ** @file main.c
  ** @{ */
 
 /* === Headers files inclusions =============================================================== */
 
-#include "chip.h"
+// #include "chip.h"
 #include <stdbool.h>
 #include "DigitalOut.h"
 #include "DigitalIn.h"
@@ -66,51 +65,7 @@ int main(void) {
 
     int divisor = 0;
 
-    // Defino el led rojo del RGB
-    // Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
-    // Digital_Out_t led_R = Digital_Out_Create(LED_R_GPIO, LED_R_BIT);
-
-    // Defino el led verde del RGB
-    // Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
-    // Digital_Out_t Led_G = Digital_Out_Create(LED_G_GPIO, LED_G_BIT);
-
-    // Defino el led azul del RGB
-    // Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
-    // Digital_Out_t led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
-
-    /******************/
-
-    // Defino el LED 1 de la placa (Rojo)
-    // Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
-    // Digital_Out_t Led_Red = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
-
-    // Defino el LED 2 de la placa (Amarillo)
-    // Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
-    // Digital_Out_t Led_Yellow = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
-
-    // Defino el LED 3 de la placa (Verde)
-    // Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
-    // Digital_Out_t Led_Green = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
-
-    /******************/
-
-    // Defino la entrada digital de la TECLA 1
-    // Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
-    // Digital_In_t Sw1 = Digital_In_Create(TEC_1_GPIO, TEC_1_BIT, false);
-
-    // Defino la entrada digital de la TECLA 2
-    // Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
-    // Digital_In_t Sw2 = Digital_In_Create(TEC_2_GPIO, TEC_2_BIT, false);
-
-    // Defino la entrada digital de la TECLA 3
-    // Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
-    // Digital_In_t Sw3 = Digital_In_Create(TEC_3_GPIO, TEC_3_BIT, false);
-
-    // Defino la entrada digital de la TECLA 4
-    // Chip_SCU_PinMuxSet(TEC_4_PORT, TEC_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_4_FUNC);
-    // Digital_In_t Sw4 = Digital_In_Create(TEC_4_GPIO, TEC_4_BIT, false);
-
-    //
+    // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
 
     // loop de programa
