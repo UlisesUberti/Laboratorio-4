@@ -1,3 +1,4 @@
+
 /*********************************************************************************************************************
 Copyright (c) 2025, Uberti,Ulises Leandro <ubertileandro0@gmail.com>
 
@@ -17,11 +18,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef BSP_H_
-#define BSP_H_
+#ifndef EDU_CIAA_H_
+#define EDU_CIAA_H_
 
-/** @file bsp.h
- ** @brief Codigo fuente de bsp.h
+/** @file .h
+ ** @brief Codigo fuente de
  @author Uberti, Ulises Leandro
  **/
 
@@ -29,8 +30,6 @@ SPDX-License-Identifier: MIT
 #include <stdint.h>
 #include "DigitalIn.h"
 #include "DigitalOut.h"
-#include "chip.h"
-#include "screen.h"
 
 /* === Header for C++ compatibility ================================================================================ */
 
@@ -42,12 +41,33 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 // creo la etructura correspondiente al objeto pantalla y un puntero a la misma
+typedef struct screen_s * screen_t; //{
+//  Digit_Turn_On_t DigitTurnOff;
+//};
+
+// funciones callback
+
+typedef void(*Digits_Turn_Off_t(void));
+typedef void(*Digit_Turn_On_t(uint8_t));
+
+typedef void(*Segments_Turn_Update_t(uint8_t));
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
 // La funcione que crea la pantalla, con los parametros que necesita
+screen_t Screen_Create(uint8_t digits); // devuelve un puntero a screen_s
+
+// funcion que no retnorna nada pero escribe en pantalla, recibe la pantalla
+void Screan_Write_BCD(screen_t screen, uint8_t value[], uint8_t size);
+
+// Una funcion de refresco
+void Screen_Refresh(screen_t screen);
+
+// funcion para el parpadeo
+void Display_Flash_Digits(screen_t display, uint8_t from, uint8_t to, uint8_t frecuency);
+/* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */
 
@@ -55,4 +75,4 @@ extern "C" {
 }
 #endif
 
-#endif /* BSP_H_ */
+#endif /* EDU_CIAA_H_ */

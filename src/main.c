@@ -39,12 +39,11 @@
 
 /* === Headers files inclusions =============================================================== */
 
-// #include "chip.h"
 #include <stdbool.h>
 #include "DigitalOut.h"
 #include "DigitalIn.h"
-// #include "EDU-CIAA.h"
 #include "bsp.h"
+
 /* === Macros definitions ====================================================================== */
 
 /* === Private data type declarations ========================================================== */

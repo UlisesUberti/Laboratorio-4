@@ -1,3 +1,4 @@
+
 /*********************************************************************************************************************
 Copyright (c) 2025, Uberti,Ulises Leandro <ubertileandro0@gmail.com>
 
@@ -17,20 +18,15 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef BSP_H_
-#define BSP_H_
+#ifndef EDU_CIAA_H_
+#define EDU_CIAA_H_
 
-/** @file bsp.h
- ** @brief Codigo fuente de bsp.h
+/** @file EDU-CIAA.h
+ ** @brief Codigo fuente de EDU-CIAA.h
  @author Uberti, Ulises Leandro
  **/
 
 /* === Headers files inclusions ==================================================================================== */
-#include <stdint.h>
-#include "DigitalIn.h"
-#include "DigitalOut.h"
-#include "chip.h"
-#include "screen.h"
 
 /* === Header for C++ compatibility ================================================================================ */
 
@@ -40,14 +36,19 @@ extern "C" {
 
 /* === Public macros definitions =================================================================================== */
 
+// Los define correspondientes al poncho 
+// segmentos del display 
+// punto del display
+//teclas del poncho (4)
+// aceptar y cancelar 
+//buzzer (led)
+
+
 /* === Public data type declarations =============================================================================== */
-// creo la etructura correspondiente al objeto pantalla y un puntero a la misma
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
-
-// La funcione que crea la pantalla, con los parametros que necesita
 
 /* === End of conditional blocks =================================================================================== */
 
@@ -55,4 +56,4 @@ extern "C" {
 }
 #endif
 
-#endif /* BSP_H_ */
+#endif /* EDU_CIAA_H_ */
