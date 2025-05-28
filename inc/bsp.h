@@ -42,13 +42,31 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 // creo la etructura correspondiente al objeto pantalla y un puntero a la misma
+typedef struct Board_s {
+    /* Estructura con los atributos de la pantalla*/
+
+    // soporte de la salida digital (zumbador)
+    Digital_Out_t Buzzer; // Zumbador de la alarma
+
+    // soporte de 6 entradas digitales (teclas)
+    Digital_In_t Set_Time;  // Entrada de seteo de la hora
+    Digital_In_t Set_Alarm; // Entrada de seteo de la alarma
+    Digital_In_t Decrement; // Disminucion de valor en display
+    Digital_In_t Increment; // Aumento de valor en display
+    Digital_In_t Accept;    // Entrada de seleccion (Aceptar)
+    Digital_In_t Cancel;    // Entrada de seleccion (Cancelar)
+
+    // Soporte para display de 7 segmentos
+    screen_t Screen;
+
+} const * Board_t;
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
 // La funcione que crea la pantalla, con los parametros que necesita
-
+Board_t Board_Create();
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

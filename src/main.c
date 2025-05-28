@@ -63,48 +63,22 @@
 int main(void) {
 
     int divisor = 0;
+    uint8_t value[4] = {1, 3, 5, 9};
 
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
 
     // loop de programa
+    Screen_Write_BCD(Board->Screen, value, 4);
     while (true) {
 
-        // Si se activa la TECLA 1 entonces se prende el LED RGB
-        if (Digital_In_GetState(Board->Sw1) == 0) {
-
-            Digital_Out_Activate(Board->Led_B);
-
-        } else {
-            // Caso contrario se desactiva
-            Digital_Out_Deactivate(Board->Led_B);
-        }
-
-        // Si la TECLA 2 estaba desactivada y se activa entonces cambia el estado del LED 1
-        if (Digital_In_Was_Deactivated(Board->Sw2)) {
-            Digital_Out_Toggle(Board->Led_Red);
-        }
-
-        // Si la TECLA 3 se activa entonces se activa el LED 2
-        if (Digital_In_GetState(Board->Sw3) == 0) {
-            Digital_Out_Activate(Board->Led_Yellow);
-        }
-        // Si la TECLA 4 se activa entonces se desactiva el LED 2
-        if (Digital_In_GetState(Board->Sw4) == 0) {
-            Digital_Out_Deactivate(Board->Led_Yellow);
-        }
-
-        // El LED 3 se activa y desactiva t[s]
         divisor++;
         if (divisor == 5) {
             divisor = 0;
-            Digital_Out_Toggle(Board->Led_Green);
         }
-
+        Screen_Refresh(Board->Screen);
         for (int index = 0; index < 100; index++) {
-            for (int delay = 0; delay < 25000; delay++) {
-                __asm("NOP"); // instruccuion para que no figure como vacio
-            }
+            __asm("NOP"); // instruccuion para que no figure como vacio
         }
     }
 }
