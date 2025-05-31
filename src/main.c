@@ -63,22 +63,26 @@
 int main(void) {
 
     int divisor = 0;
-    uint8_t value[4] = {1, 3, 5, 9};
+    uint8_t value[4] = {1, 3, 7, 9};
 
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
-
+    int flash = 0;
     // loop de programa
     Screen_Write_BCD(Board->Screen, value, 4);
-    while (true) {
+    flash = Display_Flash_Digits(Board->Screen, 0, 3, 50);
+    if (flash == 0) {
+        /* code */
+        while (true) {
 
-        divisor++;
-        if (divisor == 5) {
-            divisor = 0;
-        }
-        Screen_Refresh(Board->Screen);
-        for (int index = 0; index < 100; index++) {
-            __asm("NOP"); // instruccuion para que no figure como vacio
+            divisor++;
+            if (divisor == 5) {
+                divisor = 0;
+            }
+            Screen_Refresh(Board->Screen);
+            for (int index = 0; index < 25000; index++) {
+                __asm("NOP"); // instruccuion para que no figure como vacio
+            }
         }
     }
 }

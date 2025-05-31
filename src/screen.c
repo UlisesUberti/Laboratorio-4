@@ -31,8 +31,8 @@ SPDX-License-Identifier: MIT
 #include "screen.h"
 #include "poncho.h"
 /* === Macros definitions ========================================================================================== */
-#ifndef SCREEN_MAX_DIGITS
-#define SCREEN_MAX_DIGITS 8
+#ifndef SCREEN_MAX_Digits
+#define SCREEN_MAX_Digits 8
 #endif
 
 // LO MISMO CON EL RESTO DE SEGMENTOS --> ASIGNANDOLE A CADA SEGNMENTO EL BIT CORRESPONDIENTE AL HARDWARE
@@ -57,11 +57,15 @@ static const uint8_t Digit_Map[10] = {
 };
 // defino la estrucutura del objeto pantalla
 struct screen_s {
-    uint8_t digits;                   // cantidad de digitos de la pantalla (nuestro caso 4)
-    uint8_t value[SCREEN_MAX_DIGITS]; // value es un arreglo que almacena que numero debe estar en cada digito
-    uint8_t current_digit;            // el digito actual activado durante el multiplexado
-    screen_driver_t driver;           // estructura de punteros a funciones (apagar,prender,actualizar segmentos)
+    uint8_t Digits;                   // cantidad de digitos de la pantalla (nuestro caso 4)
+    uint8_t Value[SCREEN_MAX_Digits]; // Value es un arreglo que almacena que numero debe estar en cada digito
+    uint8_t Current_Digit;            // el digito actual activado durante el multiplexado
+    screen_driver_t Driver;           // estructura de punteros a funciones (apagar,prender,actualizar segmentos)
     // esta estrucutra permite que screen no depende directamente del hardware
+    uint8_t Flashing_From;
+    uint8_t Flashing_To;
+    uint8_t Flashing_Frecuency;
+    uint8_t Flashing_Count;
 };
 
 /* === Private function declarations =============================================================================== */
@@ -82,61 +86,104 @@ void Segments_Init(void);
 
 /* === Public function implementation ============================================================================== */
 
-screen_t Screen_Create(screen_driver_t driver, uint8_t digits) {
-    // el argumento driver debe definirse en el programa principal
+screen_t Screen_Create(screen_driver_t Driver, uint8_t Digits) {
+    // el argumento Driver debe definirse en el programa principal
     // asigno espacio en memoria para la estrucutura del objeto pantalla
     screen_t screen = malloc(sizeof(struct screen_s));
-    if (digits > SCREEN_MAX_DIGITS) {
+    if (Digits > SCREEN_MAX_Digits) {
         // caso en el que se intente poner mas digitos qu ee ancho de la pantalla
-        digits = SCREEN_MAX_DIGITS;
+        Digits = SCREEN_MAX_Digits;
     }
     if (screen != NULL) {
         // me aseguro que le asigne una direc al puntero
-        screen->digits = digits;
+        screen->Digits = Digits;
         // le asigno al campo de digitos de la pantalla la cantidad de digitos
         // agrego las funciones del fabricante que definen a los digitos --> SCU-pinmuxset
         //  CHIP_GPIO_ Setpinstate ... en false para apagar los digitos
-        //  se agrega la funcion clear value tmb
-        screen->driver = driver;
-        screen->current_digit = 0;
-        // con als funciones internas llamo directamente a digits init y digits segment
+        //  se agrega la funcion clear Value tmb
+        screen->Driver = Driver;
+        screen->Current_Digit = 0;
+        // con als funciones internas llamo directamente a Digits init y Digits segment
+        // le asigno valores iniciales nulos a los campos del parpadeo
+        screen->Flashing_Frecuency = 0;
+        // incializo el contador de paparpadeo en 0
+        screen->Flashing_Count = 0;
     }
     return screen;
 }
+
 // Funcion que convierte de BCD a 7 segmentos y guarda en memoria de video
-void Screen_Write_BCD(screen_t screen, uint8_t value[], uint8_t size) {
+void Screen_Write_BCD(screen_t screen, uint8_t Value[], uint8_t size) {
     // menset --> funcion de la libreria stdlib permite completar el array con 0
-    memset(screen->value, 0, sizeof(screen->value));
-    // Limpia la memoria de video (value[]) para poder escribir sin problemas
-    //  value trae numeros del 0 al 9
+    memset(screen->Value, 0, sizeof(screen->Value));
+    // Limpia la memoria de video (Value[]) para poder escribir sin problemas
+    //  Value trae numeros del 0 al 9
     //  la memoria de video debera guardar los segmentos a escribir
     //  CONDICIONAL POR EL TAMAÑO
     //  size es la cantidad de digitos a mostrar
-    //  value [] contiene el arreglo de numeros a escribir
-    if (size > screen->digits) {
-        size = screen->digits; // le asigno el tamaño maximo como la cantidad de digitos a escribir
+    //  Value [] contiene el arreglo de numeros a escribir
+    if (size > screen->Digits) {
+        size = screen->Digits; // le asigno el tamaño maximo como la cantidad de digitos a escribir
     }
     for (uint8_t i = 0; i < size; i++) {
-        screen->value[i] = Digit_Map[value[i]];
+        screen->Value[i] = Digit_Map[Value[i]];
         // si i = 1 --> recorre el mapa hasta la posicion 1 y lo almacena en screen
-        // ahora value[] es de la forma value[Digit_Map[i],...,Digit_Map[size]]
+        // ahora Value[] es de la forma Value[Digit_Map[i],...,Digit_Map[size]]
     }
 }
 
-// Funcion para el multiplexado
+// Funcion para actualizar el estado del display
 void Screen_Refresh(screen_t screen) {
 
     // ApagarDigitos(); // enable del display (los digitos son los enables del display)
+    uint8_t segments;
+    // Apago todos los digitos
+    screen->Driver.Digit_Turn_Off();
+    // Posiciona al objeto en el siguiente digito (circular)
+    screen->Current_Digit = (screen->Current_Digit + 1) % screen->Digits;
+    // segments guarda el numero que se debe representar en 7 segmentos
+    segments = screen->Value[screen->Current_Digit];
+    // Si el parpadeo esta activo entra en el condicional
+    if (screen->Flashing_Frecuency != 0) {
+        if (screen->Current_Digit == 0) { // Si se trata del primer digito incrementa el contador
+            screen->Flashing_Count = (screen->Flashing_Count + 1) % screen->Flashing_Frecuency;
+        }
+        // Si el contador es menor qu ela mitad de la frecuencia de parpadeo -> no se activa ningun segmento
+        if (screen->Flashing_Count < (screen->Flashing_Frecuency / 2)) {
+            /* code */
+            if (screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
+                /* code */
+                segments = 0;
+            }
+        }
+    }
+    // el valor de segments representa el numero a representar en el display
+    screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
+    screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
 
-    screen->driver.Digit_Turn_Off();                                      // Apago todos los digitos
-    screen->current_digit = (screen->current_digit + 1) % screen->digits; // posiciona al objeto en el siguiente digito
-    screen->driver.Segments_Turn_Update(screen->value[screen->current_digit]); // actualiza los segmentos
-    screen->driver.Digit_Turn_On(screen->current_digit);                       // enciende el digito actual
-
-    // screen->value[numeros a mostrar] si tengo 4 displays --> screen->value [0,0,1,2]
-    //  PrenderDigit(screen->current_digit); // podria pasarle un argumento que provoque que se apaguen todos
-    //  Digit_Turn_On(screen->current_digit);
+    // screen->Value[numeros a mostrar] si tengo 4 displays --> screen->Value [0,0,1,2]
+    //  PrenderDigit(screen->Current_Digit); // podria pasarle un argumento que provoque que se apaguen todos
+    //  Digit_Turn_On(screen->Current_Digit);
     //  estas funciones deberian estar en la interface
+}
+// Funcion de parpadeo
+// frecuency es la frecuencia de parpadeo
+int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency) {
+    int result = 0;
+    if (from > to || from >= SCREEN_MAX_Digits || to >= SCREEN_MAX_Digits) {
+        result = -1;
+    } else if (!screen) {
+        result = -1;
+    } else {
+        /* code */
+        // Le asigno a los campos del objeto pantalla los parametros de la funcion
+        screen->Flashing_Frecuency = frecuency * 2; // Multiplico por 2 para que la mitad del tiempo este en ON
+        screen->Flashing_From = from;               // primer digito a parpadear
+        screen->Flashing_To = to;                   // ultimo digito a parpadear
+        screen->Flashing_Count = 0;                 // Contador de parpadeo inicializado en 0
+        result = 0;                                 // retorna 0
+    }
+    return result;
 }
 
 /* === End of documentation ======================================================================================== */

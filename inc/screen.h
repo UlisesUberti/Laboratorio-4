@@ -91,7 +91,15 @@ void Screen_Write_BCD(screen_t Screen, uint8_t Value[], uint8_t Size);
 void Screen_Refresh(screen_t screen);
 
 // funcion para el parpadeo
-void Display_Flash_Digits(screen_t display, uint8_t from, uint8_t to, uint8_t frecuency);
+/**
+ * @brief Funcion para hacer parpeadear un display 7 segmentos
+ *
+ * @param screen puntero al objeto pantalla
+ * @param from Primer digito que parpadeara
+ * @param to Ultimo digito que parpadeara
+ * @param frecuency frecuencia de parpadeo
+ */
+int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
 /* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */
