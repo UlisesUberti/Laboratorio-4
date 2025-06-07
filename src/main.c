@@ -67,17 +67,24 @@ int main(void) {
 
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
-    int flash = 0;
+    int flash = 0, flash_P = 0;
     // loop de programa
     Screen_Write_BCD(Board->Screen, value, 4);
-    flash = Display_Flash_Digits(Board->Screen, 0, 3, 50);
-    if (flash == 0) {
+    // Point_Turn_On(Board->Screen, 0);
+    // flash = Display_Flash_Digits(Board->Screen, 0, 3, 50);
+    Select_Point(Board->Screen, 3);
+    flash_P = Flash_Point(Board->Screen, 1, 100);
+    if (flash == 0 && flash_P == 0) {
         /* code */
         while (true) {
 
             divisor++;
             if (divisor == 5) {
                 divisor = 0;
+            }
+            if (Digital_In_Was_Changed(Board->Accept)) {
+                /* code */
+                Flash_Point(Board->Screen, 2, 100);
             }
             Screen_Refresh(Board->Screen);
             for (int index = 0; index < 25000; index++) {

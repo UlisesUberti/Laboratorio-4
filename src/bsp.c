@@ -44,17 +44,21 @@ SPDX-License-Identifier: MIT
 void Digits_Turn_Off(void);
 void Digit_Turn_On(uint8_t digit);
 void Segments_Turn_Update(uint8_t value);
+void Point_Off(void);
+void Point_On(void);
 /* === Private variable definitions ================================================================================ */
 
 // estructura con los punteros a las funciones
-static const struct screen_driver_s screen_driver = {
-    .Digit_Turn_On = Digit_Turn_On,
-    .Digit_Turn_Off = Digits_Turn_Off,
-    .Segments_Turn_Update = Segments_Turn_Update,
-};
-/* === Public variable definitions ================================================================================= */
+static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn_On,
+                                                     .Digit_Turn_Off = Digits_Turn_Off,
+                                                     .Segments_Turn_Update = Segments_Turn_Update,
+                                                     .Point_Off = Point_Off,
+                                                     .Point_On = Point_On};
+/* === Public variable definitions =================================================================================
+ */
 
-/* === Private function definitions ================================================================================ */
+/* === Private function definitions ================================================================================
+ */
 
 // Defino aqui los pine GPIO ya que el BSP es el archivo relacionado al hardware en particular utilizado
 void Digits_Init() {
@@ -107,6 +111,25 @@ void Segments_Init() {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
 }
 
+void Init_Switches() {
+    // Accept
+    Chip_SCU_PinMuxSet(KEY_ACCEPT_PORT, KEY_ACCEPT_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_ACCEPT_FUNC);
+
+    // Cancel
+    Chip_SCU_PinMuxSet(KEY_CANCEL_PORT, KEY_CANCEL_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_CANCEL_FUNC);
+
+    // Switch 1 (Primero de la derecha)
+    Chip_SCU_PinMuxSet(KEY_F1_PORT, KEY_F1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_F1_FUNC);
+
+    // Switch 2
+    Chip_SCU_PinMuxSet(KEY_F2_PORT, KEY_F2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_F2_FUNC);
+
+    // Switch 3
+    Chip_SCU_PinMuxSet(KEY_F3_PORT, KEY_F3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_F3_FUNC);
+
+    // Switch 4
+    Chip_SCU_PinMuxSet(KEY_F4_PORT, KEY_F4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_F4_FUNC);
+}
 // Las funciones de Callbak se definen aqui por que realizaran tareas sobre el hardware de la placa
 void Digits_Turn_Off(void) {
     // Funciones del fabricante
@@ -128,6 +151,16 @@ void Digit_Turn_On(uint8_t digit) {
     Chip_GPIO_SetValue(LPC_GPIO_PORT, DIGITS_GPIO, (1 << (3 - digit)) & DIGITS_MASK);
 }
 
+// Funcion para prender el punto
+void Point_On(void) {
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, true);
+}
+
+// funcion para apagar el punto
+void Point_Off(void) {
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
+}
+// Funcion para crear la 'placa'
 Board_t Board_Create() {
 
     struct Board_s * Board = malloc(sizeof(struct Board_s));
@@ -136,6 +169,17 @@ Board_t Board_Create() {
         Digits_Init();
         Segments_Init();
         Board->Screen = Screen_Create(screen_driver, 4);
+        // Creamos la entrada del boton aceptar
+        Board->Accept = Digital_In_Create(KEY_ACCEPT_GPIO, KEY_CANCEL_BIT, false);
+        // creamos la entrada del boton cancelar
+        Board->Cancel = Digital_In_Create(KEY_CANCEL_BIT, KEY_CANCEL_BIT, false);
+        // Creamos las entradas desde Sw1 a Sw4
+        Board->Increment = Digital_In_Create(KEY_F4_GPIO, KEY_F4_BIT, false);
+        Board->Decrement = Digital_In_Create(KEY_F3_GPIO, KEY_F3_BIT, false);
+        Board->Set_Time = Digital_In_Create(KEY_F2_GPIO, KEY_F2_BIT, false);
+        Board->Set_Alarm = Digital_In_Create(KEY_F1_GPIO, KEY_F1_BIT, false);
+        // Creamos la salida para el buzzer
+        Board->Buzzer = Digital_Out_Create(BUZZER_GPIO, BUZZER_BIT);
     }
     // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;

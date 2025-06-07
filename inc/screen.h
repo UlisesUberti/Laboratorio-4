@@ -46,7 +46,7 @@ extern "C" {
 #define SEGMENT_E (1 << 4)
 #define SEGMENT_F (1 << 5)
 #define SEGMENT_G (1 << 6)
-// #define SEGMENT_P (1<<7)
+#define SEGMENT_P (1 << 7)
 /* === Public data type declarations =============================================================================== */
 
 // Esta archivo representa a la pantalla como clase
@@ -67,7 +67,9 @@ typedef struct screen_s * screen_t; //{
 typedef void (*Digits_Turn_Off_t)(void);         // apaga los segmentos
 typedef void (*Digit_Turn_On_t)(uint8_t);        // enciende el digito que corresponda
 typedef void (*Segments_Turn_Update_t)(uint8_t); // enciende los segmentos correspondientes
-// Segments debe recibir un componente de la lista del mapeo
+typedef void (*Point_Off_t)(void);
+typedef void (*Point_On_t)(void);
+//  Segments debe recibir un componente de la lista del mapeo
 
 // estructura del driver a pantalla que permite la abstraccion de hardware requerida (HAL)
 typedef struct screen_driver_s {
@@ -75,6 +77,8 @@ typedef struct screen_driver_s {
     Digit_Turn_On_t Digit_Turn_On;
     Digits_Turn_Off_t Digit_Turn_Off;
     Segments_Turn_Update_t Segments_Turn_Update;
+    Point_Off_t Point_Off;
+    Point_On_t Point_On;
 } screen_driver_t;
 
 /* === Public variable declarations ================================================================================ */
@@ -100,6 +104,17 @@ void Screen_Refresh(screen_t screen);
  * @param frecuency frecuencia de parpadeo
  */
 int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
+
+// Seleccionar punto para encendido constante
+void Select_Point(screen_t screen, uint8_t digit);
+
+// Funcion para parpadear el punto
+int Flash_Point(screen_t screen, uint8_t digit, uint16_t frecuency);
+
+// void Point_Turn_On(screen_t screen, uint8_t digit);
+// void Point_Turn_Off(screen_t screen, uint8_t digit);
+//  Funcion para parpadear un display
+//  int Point_Flash(screen_t screen, uint8_t display, uint16_t frecuency);
 /* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */
