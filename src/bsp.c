@@ -41,11 +41,13 @@ SPDX-License-Identifier: MIT
 /* === Private data type declarations ============================================================================== */
 
 /* === Private function declarations =============================================================================== */
+
 void Digits_Turn_Off(void);
 void Digit_Turn_On(uint8_t digit);
 void Segments_Turn_Update(uint8_t value);
 void Point_Off(void);
 void Point_On(void);
+
 /* === Private variable definitions ================================================================================ */
 
 // estructura con los punteros a las funciones
@@ -54,13 +56,23 @@ static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn
                                                      .Segments_Turn_Update = Segments_Turn_Update,
                                                      .Point_Off = Point_Off,
                                                      .Point_On = Point_On};
-/* === Public variable definitions =================================================================================
- */
 
-/* === Private function definitions ================================================================================
- */
+/* === Public variable definitions =================================================================================*/
 
-// Defino aqui los pine GPIO ya que el BSP es el archivo relacionado al hardware en particular utilizado
+/* === Private function definitions ================================================================================*/
+
+void Digits_Init(void);
+
+void Segments_Init(void);
+
+void Init_Switches(void);
+
+/* === Public function implementation ============================================================================== */
+
+/**
+ * @brief Incializacion de displays
+ *
+ */
 void Digits_Init() {
     // funciones de fabricante
     Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
@@ -75,6 +87,11 @@ void Digits_Init() {
     Chip_SCU_PinMuxSet(DIGIT_4_PORT, DIGIT_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_4_FUNC);
     Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_4_GPIO, DIGIT_4_BIT, true);
 }
+
+/**
+ * @brief Incializacion de Segmentos
+ *
+ */
 void Segments_Init() {
     // funciones de fabricante, deben inicializarse en false
     // SEGMENTO A
@@ -111,6 +128,10 @@ void Segments_Init() {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
 }
 
+/**
+ * @brief Incializacion de teclas
+ *
+ */
 void Init_Switches() {
     // Accept
     Chip_SCU_PinMuxSet(KEY_ACCEPT_PORT, KEY_ACCEPT_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_ACCEPT_FUNC);
@@ -130,7 +151,11 @@ void Init_Switches() {
     // Switch 4
     Chip_SCU_PinMuxSet(KEY_F4_PORT, KEY_F4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | KEY_F4_FUNC);
 }
-// Las funciones de Callbak se definen aqui por que realizaran tareas sobre el hardware de la placa
+
+/**
+ * @brief Funcion para apagar todos los displays
+ *
+ */
 void Digits_Turn_Off(void) {
     // Funciones del fabricante
     Chip_GPIO_ClearValue(LPC_GPIO_PORT, DIGITS_GPIO, DIGITS_MASK);
@@ -138,29 +163,44 @@ void Digits_Turn_Off(void) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
 }
 
+/**
+ * @brief Funcion para actualizar el valor de los segmentos
+ *
+ * @param value valor del segmento
+ */
 void Segments_Turn_Update(uint8_t value) {
     // Funciones fabricante
-    // dado que no trbajao con el bit 8 debo haver una operacion a nivel de bits
+    // dado que no trabajo con el bit 8 debo hacer una operacion a nivel de bits
     Chip_GPIO_SetValue(LPC_GPIO_PORT, SEGMENTS_GPIO, value & SEGMENTS_MASK);
     // Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, (value & SEGMENT_P))
 }
 
+/**
+ * @brief Funcion para habilitar un display
+ *
+ * @param digit display a habilitar
+ */
 void Digit_Turn_On(uint8_t digit) {
-
     // Funcones del fabricante
     Chip_GPIO_SetValue(LPC_GPIO_PORT, DIGITS_GPIO, (1 << (3 - digit)) & DIGITS_MASK);
 }
 
-// Funcion para prender el punto
+/**
+ * @brief Funcion para enceder un punto
+ *
+ */
 void Point_On(void) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, true);
 }
 
-// funcion para apagar el punto
+/**
+ * @brief Funcion para apagar un punto
+ *
+ */
 void Point_Off(void) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
 }
-// Funcion para crear la 'placa'
+
 Board_t Board_Create() {
 
     struct Board_s * Board = malloc(sizeof(struct Board_s));
@@ -168,10 +208,11 @@ Board_t Board_Create() {
         // ahora se debe definir los objetos referidos al poncho
         Digits_Init();
         Segments_Init();
+        Init_Switches();
         Board->Screen = Screen_Create(screen_driver, 4);
         // Creamos la entrada del boton aceptar
-        Board->Accept = Digital_In_Create(KEY_ACCEPT_GPIO, KEY_CANCEL_BIT, false);
-        // creamos la entrada del boton cancelar
+        Board->Accept = Digital_In_Create(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, false);
+        // Creamos la entrada del boton cancelar
         Board->Cancel = Digital_In_Create(KEY_CANCEL_BIT, KEY_CANCEL_BIT, false);
         // Creamos las entradas desde Sw1 a Sw4
         Board->Increment = Digital_In_Create(KEY_F4_GPIO, KEY_F4_BIT, false);
@@ -184,7 +225,5 @@ Board_t Board_Create() {
     // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;
 }
-
-/* === Public function implementation ============================================================================== */
 
 /* === End of documentation ======================================================================================== */

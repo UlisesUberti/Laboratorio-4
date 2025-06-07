@@ -63,33 +63,32 @@
 int main(void) {
 
     int divisor = 0;
-    uint8_t value[4] = {1, 3, 7, 9};
+    int tens_hour = 0, units_hour = 0, tens_minute = 0, units_minute = 0;
+    uint8_t value[4] = {tens_hour, units_hour, tens_minute, units_minute};
 
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
-    int flash = 0, flash_P = 0;
-    // loop de programa
-    Screen_Write_BCD(Board->Screen, value, 4);
-    // Point_Turn_On(Board->Screen, 0);
-    // flash = Display_Flash_Digits(Board->Screen, 0, 3, 50);
-    Select_Point(Board->Screen, 3);
-    flash_P = Flash_Point(Board->Screen, 1, 100);
-    if (flash == 0 && flash_P == 0) {
-        /* code */
-        while (true) {
 
-            divisor++;
-            if (divisor == 5) {
-                divisor = 0;
+    int flash = 0, flash_P = 0, count = 0;
+    Screen_Write_BCD(Board->Screen, value, 4);
+    flash_P = Flash_Point(Board->Screen, 1, 100);
+
+    while (true) {
+        uint8_t value_2[4] = {tens_hour, units_hour, tens_minute, units_minute};
+        Screen_Write_BCD(Board->Screen, value_2, 4);
+        divisor++;
+        if (divisor == 5) {
+            divisor = 0;
+        }
+        if (Digital_In_Was_Changed(Board->Increment)) {
+            units_hour++;
+            if (units_hour == 10) {
+                units_hour = 0;
             }
-            if (Digital_In_Was_Changed(Board->Accept)) {
-                /* code */
-                Flash_Point(Board->Screen, 2, 100);
-            }
-            Screen_Refresh(Board->Screen);
-            for (int index = 0; index < 25000; index++) {
-                __asm("NOP"); // instruccuion para que no figure como vacio
-            }
+        }
+        Screen_Refresh(Board->Screen);
+        for (int index = 0; index < 35000; index++) {
+            __asm("NOP"); // instruccuion para que no figure como vacio
         }
     }
 }

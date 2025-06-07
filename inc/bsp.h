@@ -41,7 +41,11 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 /* === Public data type declarations =============================================================================== */
-// creo la etructura correspondiente al objeto pantalla y un puntero a la misma
+
+/**
+ * @brief Estrutura del objeto placa, displays, teclas y buzzer
+ *
+ */
 typedef struct Board_s {
     /* Estructura con los atributos de la pantalla*/
 
@@ -65,8 +69,13 @@ typedef struct Board_s {
 
 /* === Public function declarations ================================================================================ */
 
-// La funcione que crea la pantalla, con los parametros que necesita
+/**
+ * @brief Funcion para crear el objeto
+ *
+ * @return Board_t puntero al objeto
+ */
 Board_t Board_Create();
+
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

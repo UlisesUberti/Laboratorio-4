@@ -38,8 +38,8 @@ extern "C" {
 #endif
 
 /* === Public macros definitions =================================================================================== */
-// defines para formalizar que el segmentoA es el bit 1 ... el segmento F el bit 6
-#define SEGMENT_A (1 << 0) // 1 desplazado 0 bits a la izq
+
+#define SEGMENT_A (1 << 0)
 #define SEGMENT_B (1 << 1)
 #define SEGMENT_C (1 << 2)
 #define SEGMENT_D (1 << 3)
@@ -47,33 +47,29 @@ extern "C" {
 #define SEGMENT_F (1 << 5)
 #define SEGMENT_G (1 << 6)
 #define SEGMENT_P (1 << 7)
+
 /* === Public data type declarations =============================================================================== */
 
-// Esta archivo representa a la pantalla como clase
-// la idea es que pueda expendarse a una pantalla con N displays de 7 segmentos + ´punto
-// como funcion debe tener una que pueda "mostrar"
-// como manejo el multiplexado?? prender de a un display en tiempos inperceptibles para el ojo
-// manejo el enable de cada display
-// puedo usar una funcion tick()
-// la pantalla debe tener una memoria de lo que va a mostrar
-
-// creo la etructura correspondiente al objeto pantalla y un puntero a la misma
-typedef struct screen_s * screen_t; //{
-//  Digit_Turn_On_t DigitTurnOff;
-//};
+/**
+ * @brief Estructura del objeto pantalla
+ *
+ */
+typedef struct screen_s * screen_t;
 
 // funciones callback sintaxis --> typedef Dato_Retornar (*puntero_funcion)(argumento);
 
-typedef void (*Digits_Turn_Off_t)(void);         // apaga los segmentos
-typedef void (*Digit_Turn_On_t)(uint8_t);        // enciende el digito que corresponda
-typedef void (*Segments_Turn_Update_t)(uint8_t); // enciende los segmentos correspondientes
-typedef void (*Point_Off_t)(void);
-typedef void (*Point_On_t)(void);
-//  Segments debe recibir un componente de la lista del mapeo
+typedef void (*Digits_Turn_Off_t)(void); // apaga los segmentos
 
-// estructura del driver a pantalla que permite la abstraccion de hardware requerida (HAL)
+typedef void (*Digit_Turn_On_t)(uint8_t); // enciende el digito que corresponda
+
+typedef void (*Segments_Turn_Update_t)(uint8_t); // enciende los segmentos correspondientes
+
+typedef void (*Point_Off_t)(void); // Apaga el punto
+
+typedef void (*Point_On_t)(void); // Enciende el punto
+
+// Estructura con los punteros a las funciones callback de la pantalla
 typedef struct screen_driver_s {
-    /* data */
     Digit_Turn_On_t Digit_Turn_On;
     Digits_Turn_Off_t Digit_Turn_Off;
     Segments_Turn_Update_t Segments_Turn_Update;
@@ -85,16 +81,31 @@ typedef struct screen_driver_s {
 
 /* === Public function declarations ================================================================================ */
 
-// La funcione que crea la pantalla, con los parametros que necesita
-screen_t Screen_Create(screen_driver_t driver, uint8_t Num_Digits); // devuelve un puntero a screen_s
+/**
+ * @brief Funcion para crear el objeto pantalla
+ *
+ * @param Driver Funciones a realizar por la pantalla
+ * @param Num_Digits Cantidad de displays
+ * @return screen_t puntero a la pantalla
+ */
+screen_t Screen_Create(screen_driver_t Driver, uint8_t Num_Digits);
 
-// funcion que no retnorna nada pero escribe en pantalla, recibe la pantalla
+/**
+ * @brief Funcion para escribir en pantalla
+ *
+ * @param Screen Pantalla a escribir
+ * @param Value Digitos a escribir
+ * @param Size Tamaño de la pantalla
+ */
 void Screen_Write_BCD(screen_t Screen, uint8_t Value[], uint8_t Size);
 
-// Una funcion de refresco para el multiplexado
+/**
+ * @brief Funcion para multiplexar la pantalla
+ *
+ * @param screen Pantalla
+ */
 void Screen_Refresh(screen_t screen);
 
-// funcion para el parpadeo
 /**
  * @brief Funcion para hacer parpeadear un display 7 segmentos
  *
@@ -105,16 +116,24 @@ void Screen_Refresh(screen_t screen);
  */
 int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
 
-// Seleccionar punto para encendido constante
-void Select_Point(screen_t screen, uint8_t digit);
+/**
+ * @brief Funcion para seleccionar un punto de los displays a prender
+ *
+ * @param screen Pantalla creada
+ * @param digit numero de display
+ */
+void Select_Point_On(screen_t screen, uint8_t digit);
 
-// Funcion para parpadear el punto
+/**
+ * @brief Funcion para asignar parametros de parpadeo a un punto
+ *
+ * @param screen Pnatalla creada
+ * @param digit Numero de display
+ * @param frecuency Frecuencia de parpadeo
+ * @return int (0) si se asigna sin incovenientes los parametros
+ */
 int Flash_Point(screen_t screen, uint8_t digit, uint16_t frecuency);
 
-// void Point_Turn_On(screen_t screen, uint8_t digit);
-// void Point_Turn_Off(screen_t screen, uint8_t digit);
-//  Funcion para parpadear un display
-//  int Point_Flash(screen_t screen, uint8_t display, uint16_t frecuency);
 /* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */
