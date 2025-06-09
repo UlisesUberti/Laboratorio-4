@@ -70,9 +70,9 @@ typedef void (*Point_On_t)(void); // Enciende el punto
 
 // Estructura con los punteros a las funciones callback de la pantalla
 typedef struct screen_driver_s {
-    Digit_Turn_On_t Digit_Turn_On;
-    Digits_Turn_Off_t Digit_Turn_Off;
-    Segments_Turn_Update_t Segments_Turn_Update;
+    Digit_Turn_On_t Digit_Turn_On;               // Funcion para encender un display
+    Digits_Turn_Off_t Digit_Turn_Off;            // Funcion para apagar los displays
+    Segments_Turn_Update_t Segments_Turn_Update; // Funcion para encender los segmentos
     Point_Off_t Point_Off;
     Point_On_t Point_On;
 } screen_driver_t;

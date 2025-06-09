@@ -31,8 +31,8 @@ SPDX-License-Identifier: MIT
 #include "screen.h"
 #include "poncho.h"
 /* === Macros definitions ========================================================================================== */
-#ifndef SCREEN_MAX_Digits
-#define SCREEN_MAX_Digits 8
+#ifndef SCREEN_MAX_DIGITS
+#define SCREEN_MAX_DIGITS 8
 #endif
 
 #ifndef POINT
@@ -59,7 +59,7 @@ static const uint8_t Digit_Map[10] = {
 
 struct screen_s {
     uint8_t Digits;                   // cantidad de digitos de la pantalla (nuestro caso 4)
-    uint8_t Value[SCREEN_MAX_Digits]; // Value es un arreglo que almacena que numero debe estar en cada digito
+    uint8_t Value[SCREEN_MAX_DIGITS]; // Value es un arreglo que almacena que numero debe estar en cada digito
     uint8_t Current_Digit;            // el digito actual activado durante el multiplexado
     screen_driver_t Driver;           // estructura de punteros a funciones (apagar,prender,actualizar segmentos)
     uint8_t Flashing_From;            // Digito desde el que parpadea
@@ -71,6 +71,7 @@ struct screen_s {
     uint8_t Flash_Point;              // Punto a parpadear de un display
     uint8_t Frecuency_Flashing_Point; // Frecuencia de parpadeo de un punto
     uint8_t Flashing_Point_Count;     // Contador de parpadeo de un punto
+    uint8_t Union_Count;
 };
 
 /* === Private function declarations =============================================================================== */
@@ -87,9 +88,9 @@ screen_t Screen_Create(screen_driver_t Driver, uint8_t Digits) {
 
     screen_t screen = malloc(sizeof(struct screen_s));
 
-    if (Digits > SCREEN_MAX_Digits) {
+    if (Digits > SCREEN_MAX_DIGITS) {
         // Trunco en caso de que supere la cantidad maxima de digitos asignados
-        Digits = SCREEN_MAX_Digits;
+        Digits = SCREEN_MAX_DIGITS;
     }
 
     if (screen != NULL) {
@@ -103,6 +104,7 @@ screen_t Screen_Create(screen_driver_t Driver, uint8_t Digits) {
         screen->Frecuency_Flashing_Point = 0; // Inicializo en 0 la frecuencia de parpadeo del punto
         screen->Flash_Point = Digits + 1;     // Inicializo el punto de parpadeo fuera del rango dado de digitos
         screen->Flashing_Point_Count = 0;     // Inicializo en 0 el contador de parpadeo de punto
+        screen->Union_Count = 0;
     }
     return screen;
 }
@@ -133,20 +135,29 @@ void Screen_Refresh(screen_t screen) {
     // segments guarda el numero que se debe representar en 7 segmentos
     segments = screen->Value[screen->Current_Digit];
     // Si el parpadeo esta activo entra en el condicional
-    if (screen->Flashing_Frecuency != 0) {
-        if (screen->Current_Digit == 0) { // Si se trata del primer digito incrementa el contador
+    if (screen->Flashing_Frecuency != 0 && screen->Frecuency_Flashing_Point == 0) {
+        if (screen->Current_Digit == 0) {
+            // Si se trata del primer digito incrementa el contador
             screen->Flashing_Count = (screen->Flashing_Count + 1) % screen->Flashing_Frecuency;
+            // Cada vez que pase por el digito 0 (1 de 4 en este caso) aumenta en 1 el contador hasta la frecuencia de
+            // parpadeo
         }
         // Si el contador es menor que la mitad de la frecuencia de parpadeo -> no se activa ningun segmento
         if (screen->Flashing_Count < (screen->Flashing_Frecuency / 2)) {
             if (screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
+                // si el digito actual esta dentro del rango indicado de digitos a parpadear
                 segments = 0;
             }
         }
+        screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
+        screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
     }
     // el valor de segments representa el numero a representar en el display
-    screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
-    screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
+    if (screen->Flashing_Frecuency == 0 && screen->Frecuency_Flashing_Point == 0) {
+        /* code */
+        screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
+        screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
+    }
 
     // condicional para prender un punto constantemente
     if (screen->Point == screen->Current_Digit && screen->Point != screen->Flash_Point && screen->Point_On == true) {
@@ -154,23 +165,53 @@ void Screen_Refresh(screen_t screen) {
     }
 
     // Condiconal para hacer parpadear un punto
-    if (screen->Frecuency_Flashing_Point != 0) {
-        if (screen->Flash_Point == screen->Current_Digit && screen->Frecuency_Flashing_Point != 0) {
-            if (screen->Flash_Point < screen->Digits) {
-                // Condional para ver que no se asigno un digito mayor a la cantidad disponible
-                screen->Flashing_Point_Count = (screen->Flashing_Point_Count + 1) % screen->Frecuency_Flashing_Point;
+    if (screen->Frecuency_Flashing_Point != 0 && screen->Flashing_Frecuency == 0) {
+        if (screen->Current_Digit == 0) {
+            // Condional para ver que no se asigno un digito mayor a la cantidad disponible
+            screen->Flashing_Point_Count = (screen->Flashing_Point_Count + 1) % screen->Frecuency_Flashing_Point;
+        }
+        if (screen->Flashing_Point_Count <= screen->Frecuency_Flashing_Point / 2 &&
+            screen->Current_Digit == screen->Flash_Point) {
+            /* code */
+            screen->Driver.Point_On();
+
+        } else if (screen->Flashing_Point_Count >= screen->Frecuency_Flashing_Point / 2 &&
+                   screen->Current_Digit == screen->Flash_Point) {
+            /* code */
+            screen->Driver.Point_Off();
+        }
+        screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
+    }
+    //
+    if (screen->Flashing_Frecuency == screen->Frecuency_Flashing_Point && screen->Frecuency_Flashing_Point != 0) {
+        /* code */
+        if (screen->Current_Digit == 0) {
+            screen->Union_Count = (screen->Union_Count + 1) % screen->Flashing_Frecuency;
+        }
+        if (screen->Union_Count <= screen->Flashing_Frecuency / 2) {
+            /* code */
+            if (screen->Current_Digit == screen->Flash_Point) {
+                /* code */
                 screen->Driver.Point_On();
             }
-            if (screen->Flashing_Point_Count < (screen->Frecuency_Flashing_Point / 2)) {
+            screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
+            screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
+        } else if (screen->Flashing_Point_Count >= screen->Frecuency_Flashing_Point / 2) {
+            /* code */
+            segments = 0;
+            if (screen->Current_Digit == screen->Flash_Point) {
+                /* code */
                 screen->Driver.Point_Off();
             }
+            screen->Driver.Segments_Turn_Update(segments);       // actualiza los segmentos
+            screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
         }
     }
 }
 
 int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency) {
     int result = 0;
-    if (from > to || from >= SCREEN_MAX_Digits || to >= SCREEN_MAX_Digits) {
+    if (from > to || from >= SCREEN_MAX_DIGITS || to >= SCREEN_MAX_DIGITS) {
         result = -1;
     } else if (!screen) {
         result = -1;
@@ -194,11 +235,13 @@ int Flash_Point(screen_t screen, uint8_t digit, uint16_t frecuency) {
     if (screen == NULL || digit > screen->Digits) {
         result = -1;
     } else {
-        screen->Frecuency_Flashing_Point = frecuency;
-        screen->Flash_Point = digit;
+        screen->Frecuency_Flashing_Point = frecuency * 2; // Asigno la frecuencia de parpadeo del punto
+        screen->Flash_Point = digit;                      // Asigno el digito correspondiente al digito a prender
+        screen->Flashing_Point_Count = 0;                 // Inicializo el contador en 0
         result = 0;
     }
     return result;
 }
 
-/* === End of documentation ======================================================================================== */
+/* === End of documentation ========================================================================================
+ */

@@ -61,9 +61,9 @@ static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn
 
 /* === Private function definitions ================================================================================*/
 
-void Digits_Init(void);
+void Init_Digits(void);
 
-void Segments_Init(void);
+void Init_Segments(void);
 
 void Init_Switches(void);
 
@@ -73,7 +73,7 @@ void Init_Switches(void);
  * @brief Incializacion de displays
  *
  */
-void Digits_Init() {
+void Init_Digits() {
     // funciones de fabricante
     Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
     Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_1_GPIO, DIGIT_1_BIT, true);
@@ -92,7 +92,7 @@ void Digits_Init() {
  * @brief Incializacion de Segmentos
  *
  */
-void Segments_Init() {
+void Init_Segments() {
     // funciones de fabricante, deben inicializarse en false
     // SEGMENTO A
     Chip_SCU_PinMuxSet(SEGMENT_A_PORT, SEGMENT_A_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_A_FUNC);
@@ -206,8 +206,8 @@ Board_t Board_Create() {
     struct Board_s * Board = malloc(sizeof(struct Board_s));
     if (Board != NULL) {
         // ahora se debe definir los objetos referidos al poncho
-        Digits_Init();
-        Segments_Init();
+        Init_Digits();
+        Init_Segments();
         Init_Switches();
         Board->Screen = Screen_Create(screen_driver, 4);
         // Creamos la entrada del boton aceptar
