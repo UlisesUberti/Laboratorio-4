@@ -72,10 +72,10 @@ int main(void) {
     // Escribo la pantalla
     Screen_Write_BCD(Board->Screen, value, 4);
     // Asigno un punto parpadeante
-    flash_P = Flash_Point(Board->Screen, 1, 100);
+    flash_P = Flash_Point(Board->Screen, 1, 1, 100);
     // Asigno displays parpadeantes
-    flash = Display_Flash_Digits(Board->Screen, 0, 3, 100);
-    Select_Point_On(Board->Screen, 0);
+    // flash = Display_Flash_Digits(Board->Screen, 0, 3, 100);
+    Select_Point_On(Board->Screen, 3);
 
     while (true) {
         uint8_t value_2[4] = {tens_hour, units_hour, tens_minute, units_minute};

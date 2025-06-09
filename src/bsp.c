@@ -42,11 +42,55 @@ SPDX-License-Identifier: MIT
 
 /* === Private function declarations =============================================================================== */
 
+/**
+ * @brief Funcion para apagar los displays
+ *
+ */
 void Digits_Turn_Off(void);
+
+/**
+ * @brief Funcion para habilitar un display
+ *
+ * @param digit numero de display
+ */
 void Digit_Turn_On(uint8_t digit);
+
+/**
+ * @brief Funcion para actualizar los segmentos
+ *
+ * @param value
+ */
 void Segments_Turn_Update(uint8_t value);
+
+/**
+ * @brief Funcion para apagar el punto
+ *
+ */
 void Point_Off(void);
+
+/**
+ * @brief Funcion para encender el punto
+ *
+ */
 void Point_On(void);
+
+/**
+ * @brief Funcion para inicializar los digitos
+ *
+ */
+void Init_Digits(void);
+
+/**
+ * @brief Funcion para incializar los segmentos
+ *
+ */
+void Init_Segments(void);
+
+/**
+ * @brief Funcion apra inicializar las teclas
+ *
+ */
+void Init_Switches(void);
 
 /* === Private variable definitions ================================================================================ */
 
@@ -60,12 +104,6 @@ static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn
 /* === Public variable definitions =================================================================================*/
 
 /* === Private function definitions ================================================================================*/
-
-void Init_Digits(void);
-
-void Init_Segments(void);
-
-void Init_Switches(void);
 
 /* === Public function implementation ============================================================================== */
 

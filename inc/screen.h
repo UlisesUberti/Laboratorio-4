@@ -73,8 +73,8 @@ typedef struct screen_driver_s {
     Digit_Turn_On_t Digit_Turn_On;               // Funcion para encender un display
     Digits_Turn_Off_t Digit_Turn_Off;            // Funcion para apagar los displays
     Segments_Turn_Update_t Segments_Turn_Update; // Funcion para encender los segmentos
-    Point_Off_t Point_Off;
-    Point_On_t Point_On;
+    Point_Off_t Point_Off;                       // Funcion para apagar los puntos
+    Point_On_t Point_On;                         // Funcion para prender el punto
 } screen_driver_t;
 
 /* === Public variable declarations ================================================================================ */
@@ -121,18 +121,20 @@ int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t fre
  *
  * @param screen Pantalla creada
  * @param digit numero de display
+ * @return 0 si digit es menor que SCREEN_MAX_DIGITS
  */
-void Select_Point_On(screen_t screen, uint8_t digit);
+int Select_Point_On(screen_t screen, uint8_t digit);
 
 /**
  * @brief Funcion para asignar parametros de parpadeo a un punto
  *
  * @param screen Pnatalla creada
- * @param digit Numero de display
+ * @param from Numero de display inicial
+ * @param to Numero de display final
  * @param frecuency Frecuencia de parpadeo
  * @return int (0) si se asigna sin incovenientes los parametros
  */
-int Flash_Point(screen_t screen, uint8_t digit, uint16_t frecuency);
+int Flash_Point(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
 
 /* === Public function declarations ================================================================================ */
 
