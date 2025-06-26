@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** @brief Codigo fuente del archivo main
+/** @brief Codigo fuente del archivo main.c
  ** @author Uberti, Ulises Leandro
  ** @file main.c
  ** @{ */
@@ -43,10 +43,18 @@
 #include "DigitalOut.h"
 #include "DigitalIn.h"
 #include "bsp.h"
+#include "clock.h"
 
 /* === Macros definitions ====================================================================== */
 
 /* === Private data type declarations ========================================================== */
+typedef enum {
+    Clock_Time_Mode,
+    Clock_Set_Time_Mode,
+    Clock_Set_Alarm_Mode,
+    Clock_Alarm_Working_Mode,
+    Clock_Invalid_Time_Mode,
+} Clock_Mode_t;
 
 /* === Private variable declarations =========================================================== */
 
@@ -62,37 +70,41 @@
 
 int main(void) {
 
-    int tens_hour = 0, units_hour = 0, tens_minute = 0, units_minute = 0;
-    uint8_t value[4] = {tens_hour, units_hour, tens_minute, units_minute};
-
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board_t Board = Board_Create();
-
-    int flash = 0, flash_P = 0;
+    // Creo el objeto Reloj
+    clock_t Clock = Clock_Create(100);
+    // Inicializo el reloj en 00:00:00
+    clock_time_t init_time = {0};
+    Clock_Get_Time(Clock, &init_time);
+    // Verifico que correctamente se inicializo en 00:00:00
+    Clock_Set_Time(Clock, &init_time);
     // Escribo la pantalla
+    clock_time_t clock_Time = Clock_Time(Clock);
+    uint8_t value[4] = {clock_Time.time.hours[0], clock_Time.time.hours[1], clock_Time.time.minutes[0],
+                        clock_Time.time.minutes[1]};
     Screen_Write_BCD(Board->Screen, value, 4);
-    // Asigno un punto parpadeante
-    flash_P = Flash_Point(Board->Screen, 1, 1, 100);
-    // Asigno displays parpadeantes
-    // flash = Display_Flash_Digits(Board->Screen, 0, 3, 100);
-    Select_Point_On(Board->Screen, 3);
+    // Defino un estado incial del reloj
+    Clock_Mode_t actual_mode = Clock_Time_Mode;
 
     while (true) {
-        uint8_t value_2[4] = {tens_hour, units_hour, tens_minute, units_minute};
-        // Rescribo la pantalla con valor actualizado
-        Screen_Write_BCD(Board->Screen, value_2, 4);
+        switch (actual_mode) {
+        case Clock_Time_Mode:
+            // En este estado el reloj funciona normal mostrando la hora y prendiendo el segundo punto
+            Select_Point_On(Board->Screen, 1);
+            // Refresco la pantalla
+            Screen_Refresh(Board->Screen);
 
-        if (Digital_In_Was_Changed(Board->Increment)) {
-            units_hour++;
-            if (units_hour == 10) {
-                units_hour = 0;
-            }
+            break;
+
+        default:
+            break;
         }
         // Refresco la pantalla
         Screen_Refresh(Board->Screen);
 
         for (int index = 0; index < 25000; index++) {
-            __asm("NOP"); // instruccuion para que no figure como vacio
+            __asm("NOP"); // instruccion para que no figure como vacio
         }
     }
 }
