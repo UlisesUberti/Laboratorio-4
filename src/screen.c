@@ -135,91 +135,79 @@ void Screen_Write_BCD(screen_t screen, uint8_t Value[], uint8_t size) {
 void Screen_Refresh(screen_t screen) {
     // variable de control
     uint8_t segments;
-    // Apago todos los digitos
+    // Apago todos los digitos en el inicio
     screen->Driver.Digit_Turn_Off();
     // Posiciona al objeto en el siguiente digito (circular)
     screen->Current_Digit = (screen->Current_Digit + 1) % screen->Digits;
     // segments guarda el numero que se debe representar en 7 segmentos
     segments = screen->Value[screen->Current_Digit];
 
-    // Condicional para parpadear solo segmentos
-    if (screen->Flashing_Frequency != 0 && screen->Flashing_Point_Frequency != screen->Flashing_Frequency) {
-        // Si el digito actual es el inicial entonces:
-        if (screen->Current_Digit == 0) {
-            // Incrementa el contador en 1
+    // variable para controlar apagado y encendido
+    bool Off_Segments = false, Off_Points = false;
+    //------
+
+    // Actualizacion de los contadores (3 contadores)
+    if (screen->Current_Digit == 0) {
+        if (screen->Flashing_Frequency != 0) {
             screen->Flashing_Count = (screen->Flashing_Count + 1) % screen->Flashing_Frequency;
-            // Cada vez que pase por el digito 0 (1 de 4 en este caso) aumenta en 1 el contador hasta la frecuencia de
-            // parpadeo
         }
-        // Si el contador es menor que la mitad de la frecuencia de parpadeo -> no se activa ningun segmento
-        if (screen->Flashing_Count < (screen->Flashing_Frequency / 2)) {
-            // Si el digito actual se encuentra entre los displays con segmentos a parpadear entonces:
-            if (screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
-                segments = 0;
-            }
-        }
-        // segments toma el valor dependiedo del contador
-        Change_Segments(screen, segments, screen->Current_Digit);
-    }
-
-    // Si no hay nada para parpadear se ejecuta con normalidad
-    if (screen->Flashing_Frequency == 0 || screen->Flashing_Point_Frequency == 0) {
-        Change_Segments(screen, segments, screen->Current_Digit);
-    }
-
-    // condicional para prender un punto constantemente
-    if (screen->Point == screen->Current_Digit && screen->Point_On == true) {
-        screen->Driver.Point_On();
-    }
-
-    // Condicional para hacer parpadear un conjunto de puntos
-    if (screen->Flashing_Point_Frequency != 0 && screen->Flashing_Point_Frequency != screen->Flashing_Frequency) {
-        if (screen->Current_Digit == 0) {
+        if (screen->Flashing_Point_Frequency != 0) {
             screen->Flashing_Point_Count = (screen->Flashing_Point_Count + 1) % screen->Flashing_Point_Frequency;
         }
-        if (screen->Flashing_Point_Count <= screen->Flashing_Point_Frequency / 2 &&
-            screen->Current_Digit >= screen->Flash_Point_From && screen->Current_Digit <= screen->Flash_Point_To) {
-            screen->Driver.Point_On();
-
-        } else if (screen->Flashing_Point_Count >= screen->Flashing_Point_Frequency / 2 &&
-                   screen->Current_Digit >= screen->Flash_Point_From &&
-                   screen->Current_Digit <= screen->Flash_Point_To) {
-            screen->Driver.Point_Off();
-        }
-        screen->Driver.Digit_Turn_On(screen->Current_Digit); // enciende el digito actual
-    }
-
-    // Condicional para parpadear puntos y displays al mismo tiempo
-    if (screen->Flashing_Frequency == screen->Flashing_Point_Frequency && screen->Flashing_Point_Frequency != 0) {
-        // Si el digito actual es el inicial entonces:
-        if (screen->Current_Digit == 0) {
-            // Cuenta con una variable en conjunto para igualar tiempos de parpadeo
+        if (screen->Flashing_Frequency == screen->Flashing_Point_Frequency && screen->Flashing_Frequency != 0) {
             screen->Union_Count = (screen->Union_Count + 1) % screen->Flashing_Frequency;
         }
-        // Si el contador esta por debajo de la mitad de la frecuencia entonces:
-        if (screen->Union_Count <= screen->Flashing_Frequency / 2) {
-            // Si el digito actual es uno de los que debe prender el punto entonces:
-            if (screen->Current_Digit >= screen->Flash_Point_From && screen->Current_Digit <= screen->Flash_Point_To) {
-                screen->Driver.Point_On(); // Prende el punto
-            }
-            // Si el digito actual debe prender los segmentos entonces:
-            if (screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
-                Change_Segments(screen, segments, screen->Current_Digit);
-            }
-
-        } else if (screen->Union_Count >= screen->Flashing_Frequency / 2) {
-            // Si el digito actual es uno de los que debe apagar el punto entonces:
-            if (screen->Current_Digit >= screen->Flash_Point_From && screen->Current_Digit <= screen->Flash_Point_To) {
-                screen->Driver.Point_Off(); // Apaga el punto
-            }
-            // Si el digito actual es uno de los que debe apagar los segmentos entonces:
-            if (screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
-                segments = 0;
-                Change_Segments(screen, segments, screen->Current_Digit);
-            }
-        }
-        Change_Segments(screen, segments, screen->Current_Digit);
     }
+
+    // Determinar si parpadean segmentos y/o puntos
+
+    // parpadean los segmentos
+    if (screen->Flashing_Frequency != 0 && screen->Flashing_Point_Frequency != screen->Flashing_Frequency) {
+        if (screen->Flashing_Count < screen->Flashing_Frequency / 2 && screen->Current_Digit >= screen->Flashing_From &&
+            screen->Current_Digit <= screen->Flashing_To) {
+            Off_Segments = true;
+        }
+    }
+
+    // Parpadean los puntos
+
+    if (screen->Flashing_Point_Frequency != 0 && screen->Flashing_Point_Frequency != screen->Flashing_Frequency) {
+        if (screen->Flashing_Point_Count < screen->Flashing_Point_Frequency / 2 &&
+            screen->Current_Digit >= screen->Flash_Point_From && screen->Current_Digit <= screen->Flash_Point_To) {
+            Off_Points = true;
+        }
+    }
+
+    // Parpadean puntos y segmentos
+    if (screen->Flashing_Frequency == screen->Flashing_Point_Frequency && screen->Flashing_Frequency != 0) {
+        bool both = (screen->Union_Count < screen->Flashing_Frequency / 2);
+        if (!both && screen->Current_Digit >= screen->Flashing_From && screen->Current_Digit <= screen->Flashing_To) {
+            Off_Segments = true;
+        }
+        if (both && screen->Current_Digit >= screen->Flash_Point_From &&
+            screen->Current_Digit <= screen->Flash_Point_To) {
+            Off_Points = true;
+        }
+    }
+
+    // Modificar segun este en true o false el Off segments o Points
+    // Encendido de los segmentos
+    if (Off_Segments) {
+        segments = 0;
+    }
+    Change_Segments(screen, segments, screen->Current_Digit);
+    // Encendido de un punto particular
+    if (screen->Point == screen->Current_Digit && screen->Point_On) {
+        screen->Driver.Point_On();
+    }
+    // Encendido de los puntos
+    if (Off_Points) {
+        screen->Driver.Point_On();
+    } else {
+        screen->Driver.Point_Off();
+    }
+
+    //------
 }
 
 int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frequency) {
@@ -246,6 +234,11 @@ int Select_Point_On(screen_t screen, uint8_t digit) {
         result = 0;
     }
     return result;
+}
+
+void Points_Off(screen_t screen) {
+    screen->Driver.Point_Off();
+    //  screen->Flashing_Point_Frequency = 0;
 }
 
 int Flash_Point(screen_t screen, uint8_t from, uint8_t to, uint16_t frequency) {

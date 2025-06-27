@@ -38,6 +38,8 @@ SPDX-License-Identifier: MIT
 
 /* === Macros definitions ========================================================================================== */
 
+#define FRECUENCIA_TICK 1000 // 1 Hz --> 1s
+
 /* === Private data type declarations ============================================================================== */
 
 /* === Private function declarations =============================================================================== */
@@ -73,26 +75,28 @@ void Point_Off(void);
  *
  */
 void Point_On(void);
-
 /**
  * @brief Funcion para inicializar los digitos
  *
  */
-void Init_Digits(void);
+static void Init_Digits(void);
 
 /**
  * @brief Funcion para incializar los segmentos
  *
  */
-void Init_Segments(void);
+static void Init_Segments(void);
 
 /**
  * @brief Funcion apra inicializar las teclas
  *
  */
-void Init_Switches(void);
+static void Init_Switches(void);
 
 /* === Private variable definitions ================================================================================ */
+
+// Inicializo una variable para contar milisegundos
+static volatile uint32_t millis = 0;
 
 // estructura con los punteros a las funciones
 static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn_On,
@@ -104,8 +108,6 @@ static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn
 /* === Public variable definitions =================================================================================*/
 
 /* === Private function definitions ================================================================================*/
-
-/* === Public function implementation ============================================================================== */
 
 /**
  * @brief Incializacion de displays
@@ -239,6 +241,8 @@ void Point_Off(void) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
 }
 
+/* === Public function implementation ============================================================================== */
+
 Board_t Board_Create() {
 
     struct Board_s * Board = malloc(sizeof(struct Board_s));
@@ -251,17 +255,34 @@ Board_t Board_Create() {
         // Creamos la entrada del boton aceptar
         Board->Accept = Digital_In_Create(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, false);
         // Creamos la entrada del boton cancelar
-        Board->Cancel = Digital_In_Create(KEY_CANCEL_BIT, KEY_CANCEL_BIT, false);
+        Board->Cancel = Digital_In_Create(KEY_CANCEL_GPIO, KEY_CANCEL_BIT, false);
         // Creamos las entradas desde Sw1 a Sw4
         Board->Increment = Digital_In_Create(KEY_F4_GPIO, KEY_F4_BIT, false);
         Board->Decrement = Digital_In_Create(KEY_F3_GPIO, KEY_F3_BIT, false);
-        Board->Set_Time = Digital_In_Create(KEY_F2_GPIO, KEY_F2_BIT, false);
-        Board->Set_Alarm = Digital_In_Create(KEY_F1_GPIO, KEY_F1_BIT, false);
+        Board->Set_Time = Digital_In_Create(KEY_F1_GPIO, KEY_F1_BIT, false);
+        Board->Set_Alarm = Digital_In_Create(KEY_F2_GPIO, KEY_F2_BIT, false);
         // Creamos la salida para el buzzer
         Board->Buzzer = Digital_Out_Create(BUZZER_GPIO, BUZZER_BIT);
     }
     // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;
+}
+
+// Esta funcion permite obtener el valor de los milisegundos
+uint32_t Board_getMillis(void) {
+    return millis;
+}
+
+// Funcion que inicializa Systick
+void Init_Tick(void) {
+    // Una funcion proporcionada por el fabricante que actualiza SystemCoreClock
+    SystemCoreClockUpdate();
+    // Funcion para configurar el timer Systick que genera la interrupcion peridodica
+    SysTick_Config(SystemCoreClock / FRECUENCIA_TICK);
+}
+// Esta funcion se ejecuta cada 1ms, entonces cuando pasen 1000ms -> 1seg
+void SysTick_Handler(void) {
+    millis++;
 }
 
 /* === End of documentation ======================================================================================== */

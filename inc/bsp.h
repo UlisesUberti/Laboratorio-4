@@ -74,8 +74,20 @@ typedef struct Board_s {
  *
  * @return Board_t puntero al objeto
  */
-Board_t Board_Create();
+Board_t Board_Create(void);
 
+/**
+ * @brief Funcion que devuelve la cantidad de milisegundos desde que arranco el sistema
+ *
+ * @return uint32_t
+ */
+uint32_t Board_getMillis(void);
+
+/**
+ * @brief Funcion para inicializar el contador de tiempo
+ *
+ */
+void Init_Tick(void);
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

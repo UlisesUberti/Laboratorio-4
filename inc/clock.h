@@ -63,6 +63,13 @@ typedef struct clock_s * clock_t;
 clock_t Clock_Create(uint16_t Ticks_Per_Second);
 
 /**
+ * @brief
+ *
+ * @param clock
+ */
+void Clock_Init(clock_t clock);
+
+/**
  * @brief Funcion para actulizar el estado de la hora del reloj
  *
  * @param clock objeto reloj

@@ -120,46 +120,42 @@ clock_time_t Clock_Time(clock_t Clock) {
 }
 
 void Clock_New_Tick(clock_t clock) {
-    clock->Clock_Ticks++;
-    if (clock->Clock_Ticks == 5) {
-        clock->Clock_Ticks = 0;
-        clock->curren_time.time.seconds[0]++;
-        // Si el reloj esta por encima de 00:00:09 entonces
-        if (clock->curren_time.time.seconds[0] > 9) {
-            // regreso a 0 la unidad de segundos
-            clock->curren_time.time.seconds[0] = 0;
-            // aumento la decena de segundo en uno
-            clock->curren_time.time.seconds[1]++;
+    clock->curren_time.time.seconds[0]++;
+    // Si el reloj esta por encima de 00:00:09 entonces
+    if (clock->curren_time.time.seconds[0] > 9) {
+        // regreso a 0 la unidad de segundos
+        clock->curren_time.time.seconds[0] = 0;
+        // aumento la decena de segundo en uno
+        clock->curren_time.time.seconds[1]++;
+    }
+    // Si la decena de segundo es mayor a 5 entonces
+    if (clock->curren_time.time.seconds[1] > 5) {
+        // Nuevamente pongo en 0 la decena de segundo
+        clock->curren_time.time.seconds[1] = 0;
+        // Aumenta la unidad de minutos en 1
+        clock->curren_time.time.minutes[0]++;
+        // Si la unidad de minutos es mayor que 9 entonces
+        if (clock->curren_time.time.minutes[0] > 9) {
+            // Regreso a 0 la unidad de minutos
+            clock->curren_time.time.minutes[0] = 0;
+            // Aumenta en 1 la decena de minutos
+            clock->curren_time.time.minutes[1]++;
         }
-        // Si la decena de segundo es mayor a 5 entonces
-        if (clock->curren_time.time.seconds[1] > 5) {
-            // Nuevamente pongo en 0 la decena de segundo
-            clock->curren_time.time.seconds[1] = 0;
-            // Aumenta la unidad de minutos en 1
-            clock->curren_time.time.minutes[0]++;
-            // Si la unidad de minutos es mayor que 9 entonces
-            if (clock->curren_time.time.minutes[0] > 9) {
-                // Regreso a 0 la unidad de minutos
-                clock->curren_time.time.minutes[0] = 0;
-                // Aumenta en 1 la decena de minutos
-                clock->curren_time.time.minutes[1]++;
+        // Si la decena de minuto es mayor que 5, entonces:
+        if (clock->curren_time.time.minutes[1] > 5) {
+            // Regreso a 0 la decena de minutos
+            clock->curren_time.time.minutes[1] = 0;
+            // aumento en uno la unidad de horas
+            clock->curren_time.time.hours[0]++;
+            if (clock->curren_time.time.hours[0] > 9) {
+                clock->curren_time.time.hours[0] = 0;
+                clock->curren_time.time.hours[1]++;
             }
-            // Si la decena de minuto es mayor que 5, entonces:
-            if (clock->curren_time.time.minutes[1] > 5) {
-                // Regreso a 0 la decena de minutos
-                clock->curren_time.time.minutes[1] = 0;
-                // aumento en uno la unidad de horas
-                clock->curren_time.time.hours[0]++;
-                if (clock->curren_time.time.hours[0] > 9) {
-                    clock->curren_time.time.hours[0] = 0;
-                    clock->curren_time.time.hours[1]++;
-                }
-                // si la hora se encuentra en 23 entonces
-                if ((clock->curren_time.time.hours[1] > 2) ||
-                    (clock->curren_time.time.hours[0] > 3 && clock->curren_time.time.hours[1] == 2)) {
-                    clock->curren_time.time.hours[0] = 0;
-                    clock->curren_time.time.hours[1] = 0;
-                }
+            // si la hora se encuentra en 23 entonces
+            if ((clock->curren_time.time.hours[1] > 2) ||
+                (clock->curren_time.time.hours[0] > 3 && clock->curren_time.time.hours[1] == 2)) {
+                clock->curren_time.time.hours[0] = 0;
+                clock->curren_time.time.hours[1] = 0;
             }
         }
     }
@@ -229,6 +225,14 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
 
     clock->time_alarm_with_delay.time.minutes[0] = New_Minutes % 10;
     clock->time_alarm_with_delay.time.minutes[1] = New_Minutes / 10;
+
+    // hago los mismo para la hora
+    uint8_t Units_Hours = clock->time_alarm_with_delay.time.hours[0];
+    uint8_t Tens_Hours = clock->time_alarm_with_delay.time.hours[1];
+    uint8_t Total_Hours = Units_Hours + Tens_Hours * 10 + Pass_Hours;
+    uint8_t New_Hour = Total_Hours % 24;
+    clock->time_alarm_with_delay.time.hours[0] = New_Hour % 10;
+    clock->time_alarm_with_delay.time.hours[1] = New_Hour / 10;
 
     clock->Delay_Active = true;
 
