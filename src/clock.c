@@ -119,6 +119,57 @@ clock_time_t Clock_Time(clock_t Clock) {
     return invalid;
 }
 
+void Clock_Increment_Minutes(clock_time_t * clock_Time) {
+    clock_Time->time.minutes[0]++;
+    if (clock_Time->time.minutes[0] == 10) {
+        clock_Time->time.minutes[0] = 0;
+        clock_Time->time.minutes[1]++;
+    }
+    if (clock_Time->time.minutes[1] == 6) {
+        clock_Time->time.minutes[1] = 0;
+    }
+}
+
+void Clock_Decrement_Minutes(clock_time_t * clock_Time) {
+    if (clock_Time->time.minutes[0] == 0 && clock_Time->time.minutes[1] == 0) {
+        clock_Time->time.minutes[1] = 5;
+        clock_Time->time.minutes[0] = 9;
+    } else if (clock_Time->time.minutes[0] == 0) {
+        clock_Time->time.minutes[0] = 9;
+        clock_Time->time.minutes[1]--;
+    } else {
+        clock_Time->time.minutes[0]--;
+    }
+}
+
+void Clock_Increment_Hours(clock_time_t * clock_Time) {
+    clock_Time->time.hours[0]++;
+    if (clock_Time->time.hours[0] == 10) {
+        clock_Time->time.hours[0] = 0;
+        clock_Time->time.hours[1]++;
+    }
+    if ((clock_Time->time.hours[1] == 2 && clock_Time->time.hours[0] == 4) || (clock_Time->time.hours[1] == 3)) {
+        clock_Time->time.hours[1] = 0;
+        clock_Time->time.hours[0] = 0;
+    }
+}
+
+void Clock_Decrement_Hours(clock_time_t * clock_Time) {
+    if (clock_Time->time.hours[0] == 0 && clock_Time->time.hours[1] == 0) {
+        clock_Time->time.hours[1] = 2;
+        clock_Time->time.hours[0] = 3;
+    } else if (clock_Time->time.hours[0] == 0) {
+        clock_Time->time.hours[1]--;
+        if (clock_Time->time.hours[1] == 2) {
+            clock_Time->time.hours[0] = 3;
+        } else {
+            clock_Time->time.hours[0] = 9;
+        }
+    } else {
+        clock_Time->time.hours[0]--;
+    }
+}
+
 void Clock_New_Tick(clock_t clock) {
     clock->curren_time.time.seconds[0]++;
     // Si el reloj esta por encima de 00:00:09 entonces

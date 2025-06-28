@@ -36,7 +36,6 @@ extern "C" {
 #endif
 
 /* === Public macros definitions =================================================================================== */
-
 /* === Public data type declarations =============================================================================== */
 
 typedef union {
@@ -96,6 +95,11 @@ clock_time_t Clock_Time(clock_t Clock);
  * @return false si es valida la hora ingresada
  */
 bool Clock_Set_Time(clock_t clock, clock_time_t * new_time);
+
+void Clock_Increment_Minutes(clock_time_t * clock_time);
+void Clock_Decrement_Minutes(clock_time_t * clock_time);
+void Clock_Increment_Hours(clock_time_t * clock_time);
+void Clock_Decrement_Hours(clock_time_t * clock_time);
 
 /**
  * @brief Funcion para contar un pulso

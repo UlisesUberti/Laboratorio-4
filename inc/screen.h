@@ -138,9 +138,13 @@ int Flash_Point(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
 
 void Points_Off(screen_t screen);
 
-/* === Public function declarations ================================================================================ */
+void All_Points_On(screen_t screen);
 
-/* === End of conditional blocks =================================================================================== */
+void All_Points_Off(screen_t screen);
+
+/* === Public function declarations ================================================================================*/
+
+/* === End of conditional blocks ===================================================================================*/
 
 #ifdef __cplusplus
 }

@@ -67,6 +67,7 @@ struct screen_s {
     uint8_t Flashing_Frequency;       // Frecuencia de parpadeo
     uint8_t Flashing_Count;           // Contador de parpadeo de displays
     uint8_t Point;                    // punto de un display
+    bool All_Points_On;               // Bandera para determinar si se preden todos los puntos
     bool Point_On;                    // Estado del punto asignado (false-apagado)
     uint8_t Flash_Point_From;         // Punto a parpadear de un display
     uint8_t Flash_Point_To;           // Punto a parpadear de un display
@@ -112,7 +113,8 @@ screen_t Screen_Create(screen_driver_t Driver, uint8_t Digits) {
         screen->Point_On = false;             // Incializo el punto apagado
         screen->Flashing_Point_Frequency = 0; // Inicializo en 0 la frecuencia de parpadeo del punto
         screen->Flashing_Point_Count = 0;     // Inicializo en 0 el contador de parpadeo de punto
-        screen->Union_Count = 0;
+        screen->Union_Count = 0;              // incializo en 0 el contador en compartido
+        screen->All_Points_On = false;        // Inicializo en false todos los puntos prendidos
     }
     return screen;
 }
@@ -196,18 +198,36 @@ void Screen_Refresh(screen_t screen) {
         segments = 0;
     }
     Change_Segments(screen, segments, screen->Current_Digit);
-    // Encendido de un punto particular
-    if (screen->Point == screen->Current_Digit && screen->Point_On) {
+
+    // Encendido de todos los puntos
+    if (screen->All_Points_On) {
         screen->Driver.Point_On();
-    }
-    // Encendido de los puntos
-    if (Off_Points) {
+    } else if (screen->Point == screen->Current_Digit && screen->Point_On) {
+        // Encendido de un punto particular
+        screen->Driver.Point_On();
+    } else if (Off_Points) {
         screen->Driver.Point_On();
     } else {
         screen->Driver.Point_Off();
     }
 
     //------
+}
+
+void All_Points_On(screen_t screen) {
+    if (screen) {
+        screen->All_Points_On = true;
+        screen->Point_On = false;
+        screen->Flashing_Point_Frequency = 0;
+    }
+}
+
+void All_Points_Off(screen_t screen) {
+    if (screen) {
+        screen->All_Points_On = false;
+        screen->Point_On = false;
+        screen->Flashing_Point_Frequency = 0;
+    }
 }
 
 int Display_Flash_Digits(screen_t screen, uint8_t from, uint8_t to, uint16_t frequency) {
