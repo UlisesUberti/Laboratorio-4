@@ -135,7 +135,6 @@ int main(void) {
     // Variable para llevar la cuenta inicial de 1 segundo
     uint32_t last_time = 0;
     uint32_t refresh = 0;
-    uint32_t Delay_time = 0;
     uint32_t inactivity_time = 0;
 
     // variable para incializar una sola vez el parpadeo
@@ -147,14 +146,14 @@ int main(void) {
 
     // variable para indicar que la alarma cambio su horario por defecto
     bool first_set_alarm = true;
-
-    bool press_botton = false;
     //
     bool Set_Time_flag = false;
     uint32_t F1_Delay = 0;
 
     bool Set_Alarm_flag = false;
     uint32_t F2_Delay = 0;
+
+    bool alarm_sounding = false;
 
     while (true) {
         switch (actual_mode) {
@@ -338,7 +337,7 @@ int main(void) {
             }
 
             // Si se presiona Set_Time pasamos a modificar los minutos
-            if (Delay_Button(Board->Set_Time, &F1_Delay, 3000, &Set_Time_flag)) {
+            if (Delay_Button(Board->Set_Time, &F1_Delay, 2000, &Set_Time_flag)) {
                 actual_mode = Clock_Set_Minutes_Mode;
                 init = false;
                 refresh = 0;
@@ -348,37 +347,40 @@ int main(void) {
             }
 
             // Si se preisona aceptar se activa la alarma
-            if (Digital_In_Was_Activated(Board->Accept)) {
+            if (Digital_In_Was_Activated(Board->Accept) && !alarm_sounding) {
                 Clock_Set_Alarm(Clock, true);
                 Select_Point_On(Board->Screen, 3);
             }
 
             // Si se presiona cancelar se desactiva la alarma
-            if (Digital_In_Was_Activated(Board->Cancel)) {
+            if (Digital_In_Was_Activated(Board->Cancel) && !alarm_sounding) {
                 Clock_Set_Alarm(Clock, false);
-                Points_Off(Board->Screen);
+                All_Points_Off(Board->Screen);
+                init = false;
             }
 
             //  Si la alarma esta activa y coincide el horario de la alarma con el del reloj se prende el led
-            if (Clock_Alarm_Working(Clock, &alarm_time)) {
+            if (Clock_Alarm_Working(Clock, &alarm_time) && !alarm_sounding) {
                 Digital_Out_Activate(Board->Led_3);
+                alarm_sounding = true;
             }
 
             // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
-            if (Digital_In_Was_Activated(Board->Accept) && Digital_Out_Get_State(Board->Led_3)) {
+            if (Digital_In_Was_Activated(Board->Accept) && alarm_sounding) {
                 Clock_Set_Alarm_Delay(Clock, 1);
                 Digital_Out_Deactivate(Board->Led_3);
+                alarm_sounding = false;
             }
 
-            // Si suena la alarma y se presiona cancelar entonces se apaga
-            if (Digital_In_Was_Activated(Board->Cancel) && Digital_Out_Get_State(Board->Led_3)) {
-                Clock_Set_Alarm(Clock, false);
-                Points_Off(Board->Screen);
+            // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
+            if (Digital_In_Was_Activated(Board->Cancel) && alarm_sounding) {
+                Clock_Set_Alarm(Clock, true);
                 Digital_Out_Deactivate(Board->Led_3);
+                alarm_sounding = false;
             }
 
             // Si se presiona el boton de alarma por mas de 3 segundos pasa al estado set_alarma
-            if (Delay_Button(Board->Set_Alarm, &F2_Delay, 3000, &Set_Alarm_flag)) {
+            if (Delay_Button(Board->Set_Alarm, &F2_Delay, 2000, &Set_Alarm_flag)) {
                 actual_mode = Clock_Set_Alarm_Mode;
                 init = false;
                 refresh = 0;
