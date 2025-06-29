@@ -74,6 +74,15 @@ void Digital_Out_Deactivate(Digital_Out_t Digital_Out);
  */
 void Digital_Out_Toggle(Digital_Out_t Digital_Out);
 
+/**
+ * @brief Funcion para determinar si la salida esta en alto o bajo
+ *
+ * @param Digital_Out puntero a la salida digital
+ * @return true si la salida esta en alto
+ * @return false si la salida esta en bajo
+ */
+bool Digital_Out_Get_State(Digital_Out_t Digital_Out);
+
 /* === Public function declarations ================================================================================ */
 
 /* === End of conditional blocks =================================================================================== */

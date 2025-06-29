@@ -81,6 +81,9 @@ void Digital_Out_Toggle(Digital_Out_t Digital_Out) {
     Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin);
 }
 
+bool Digital_Out_Get_State(Digital_Out_t Digital_Out) {
+    return Chip_GPIO_GetPinState(LPC_GPIO_PORT, Digital_Out->port, Digital_Out->pin);
+}
 /* === Public function implementation ============================================================================== */
 
 /* === End of documentation ======================================================================================== */
