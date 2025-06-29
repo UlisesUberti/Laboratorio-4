@@ -35,6 +35,7 @@ SPDX-License-Identifier: MIT
 #include "bsp.h"
 #include "poncho.h"
 #include "screen.h"
+#include "EDU-CIAA.h"
 
 /* === Macros definitions ========================================================================================== */
 
@@ -93,6 +94,8 @@ static void Init_Segments(void);
  */
 static void Init_Switches(void);
 
+static void Init_Leds(void);
+
 /* === Private variable definitions ================================================================================ */
 
 // Inicializo una variable para contar milisegundos
@@ -109,6 +112,25 @@ static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn
 
 /* === Private function definitions ================================================================================*/
 
+static void Init_Leds(void) {
+    // Led Rojo (RGB)
+    Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
+
+    // Led Verde (RGB)
+    Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
+
+    // Led Azul (RGB)
+    Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
+
+    // Led Rojo
+    Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
+
+    // Led Amarillo
+    Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
+
+    // Led Verde
+    Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
+}
 /**
  * @brief Incializacion de displays
  *
@@ -251,6 +273,7 @@ Board_t Board_Create() {
         Init_Digits();
         Init_Segments();
         Init_Switches();
+        Init_Leds();
         Board->Screen = Screen_Create(screen_driver, 4);
         // Creamos la entrada del boton aceptar
         Board->Accept = Digital_In_Create(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, false);
@@ -263,24 +286,28 @@ Board_t Board_Create() {
         Board->Set_Alarm = Digital_In_Create(KEY_F2_GPIO, KEY_F2_BIT, false);
         // Creamos la salida para el buzzer
         Board->Buzzer = Digital_Out_Create(BUZZER_GPIO, BUZZER_BIT);
+
+        // Creo las salidas para los leds inferiores
+        Board->Led_3 = Digital_Out_Create(LED_3_GPIO, LED_3_BIT);
+        Board->Led_2 = Digital_Out_Create(LED_2_GPIO, LED_2_BIT);
+        Board->Led_1 = Digital_Out_Create(LED_1_GPIO, LED_1_BIT);
+        Board->Led_B = Digital_Out_Create(LED_B_GPIO, LED_B_BIT);
     }
     // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;
 }
 
-// Esta funcion permite obtener el valor de los milisegundos
 uint32_t Board_getMillis(void) {
     return millis;
 }
 
-// Funcion que inicializa Systick
 void Init_Tick(void) {
     // Una funcion proporcionada por el fabricante que actualiza SystemCoreClock
     SystemCoreClockUpdate();
     // Funcion para configurar el timer Systick que genera la interrupcion peridodica
     SysTick_Config(SystemCoreClock / FRECUENCIA_TICK);
 }
-// Esta funcion se ejecuta cada 1ms, entonces cuando pasen 1000ms -> 1seg
+
 void SysTick_Handler(void) {
     millis++;
 }

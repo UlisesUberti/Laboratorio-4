@@ -63,6 +63,14 @@ typedef struct Board_s {
     // Soporte para display de 7 segmentos
     screen_t Screen;
 
+    // Leds de la placa (inferiores)
+    Digital_Out_t Led_1;
+    Digital_Out_t Led_2;
+    Digital_Out_t Led_3;
+    Digital_Out_t Led_R;
+    Digital_Out_t Led_G;
+    Digital_Out_t Led_B;
+
 } const * Board_t;
 
 /* === Public variable declarations ================================================================================ */

@@ -287,7 +287,7 @@ int main(void) {
                 refresh = Board_getMillis();
             }
 
-            // Si se presiona Set_Time pasamos a mdoificar los minutos
+            // Si se presiona Set_Time pasamos a modificar los minutos
             if (Digital_In_Was_Activated(Board->Set_Time)) {
                 while (Digital_In_Was_Deactivated(Board->Set_Time)) {
                     __asm("NOP"); // instruccion para que no figure como vacio
@@ -311,8 +311,26 @@ int main(void) {
                 refresh = 0;
                 last_time = 0;
             }
+            // Si se preisona aceptar se activa la alarma
             if (Digital_In_Was_Activated(Board->Accept)) {
                 Clock_Set_Alarm(Clock, true);
+                Select_Point_On(Board->Screen, 3);
+            }
+            // Si suena la alarma se activa un led simulando buzzer
+            if (Clock_Alarm_Working(Clock, &alarm_time)) {
+                Digital_Out_Activate(Board->Led_3);
+            }
+
+            // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
+            if (Digital_In_Was_Activated(Board->Accept) && Clock_Alarm_Working(Clock, &alarm_time)) {
+                Clock_Set_Alarm_Delay(Clock, 5);
+                Digital_Out_Deactivate(Board->Led_3);
+            }
+            // Si suena la alarma y se presiona cancelar entonces se apaga
+            if (Digital_In_Was_Activated(Board->Cancel) && Clock_Alarm_Working(Clock, &alarm_time)) {
+                Clock_Set_Alarm(Clock, false);
+                Points_Off(Board->Screen);
+                Digital_Out_Deactivate(Board->Led_3);
             }
 
             break;
@@ -353,6 +371,7 @@ int main(void) {
                 All_Points_Off(Board->Screen);
             }
             break;
+
         case Clock_Set_Minutes_Alarm_Mode:
             // hago parpadear los minutos
             if (!init) {
@@ -360,7 +379,7 @@ int main(void) {
                 init = true;
             }
 
-            // Si se presiona para incrmentar el tiempo
+            // Si se presiona para incrementar el tiempo
             if (Digital_In_Was_Activated(Board->Increment)) {
                 Clock_Increment_Minutes(&alarm_time);
             }

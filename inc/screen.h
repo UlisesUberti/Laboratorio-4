@@ -136,10 +136,25 @@ int Select_Point_On(screen_t screen, uint8_t digit);
  */
 int Flash_Point(screen_t screen, uint8_t from, uint8_t to, uint16_t frecuency);
 
+/**
+ * @brief Funcion para apagar instantaneamente un punto
+ *
+ * @param screen
+ */
 void Points_Off(screen_t screen);
 
+/**
+ * @brief Funcion para Encender directamente todos los puntos
+ *
+ * @param screen
+ */
 void All_Points_On(screen_t screen);
 
+/**
+ * @brief Funcion para apagar directamente todos los puntos
+ *
+ * @param screen
+ */
 void All_Points_Off(screen_t screen);
 
 /* === Public function declarations ================================================================================*/

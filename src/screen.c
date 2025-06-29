@@ -258,7 +258,6 @@ int Select_Point_On(screen_t screen, uint8_t digit) {
 
 void Points_Off(screen_t screen) {
     screen->Driver.Point_Off();
-    //  screen->Flashing_Point_Frequency = 0;
 }
 
 int Flash_Point(screen_t screen, uint8_t from, uint8_t to, uint16_t frequency) {
