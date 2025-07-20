@@ -64,6 +64,16 @@ typedef enum {
 
 /* === Private variable declarations =========================================================== */
 
+// Estructura para evitar el rebote del boton aceptar
+typedef struct {
+    bool waiting;
+    uint32_t init_time;
+} Accept_Debounce_t;
+
+static Board_t Board;
+static clock_t Clock;
+static Clock_Mode_t actual_mode;
+
 /* === Private function declarations =========================================================== */
 
 /**
@@ -74,7 +84,34 @@ typedef enum {
  */
 static void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]);
 
+/**
+ * @brief Funcion para detectar que un boton se mantuvo presionado x [ms]
+ *
+ * @param Digital_In Entrada digital
+ * @param start tiempo de inicio del contador (en cero)
+ * @param duration tiempo que debe estar presionado
+ * @param flag bandera que indica si se presiono o no
+ * @return true Si se mantuvo presionado el boton x [ms]
+ * @return false si no se mantuvo presionado el boton x[ms]
+ */
 static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t duration, bool * flag);
+
+/**
+ * @brief Funcion para evitar el rebote de un boton
+ *
+ * @param Digital_In entrada digital (boton)
+ * @return true si pasaron 10ms desde que se dejo de presionar el boton
+ * @return false si no pasaron los 10ms desde que se dejo de presionar el boton
+ */
+static bool Button_Debounce(Digital_In_t Digital_In);
+
+/**
+ * @brief Funcion para cambiar el estado en que se encuentra el reloj
+ *
+ * @param Mode Modo al que se quiere pasar
+ * @return Clock_Mode_t retorna el modo al que se paso
+ */
+static Clock_Mode_t Change_Mode(Clock_Mode_t Mode);
 
 /* === Public variable definitions ============================================================= */
 
@@ -105,40 +142,71 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
     }
     return false;
 }
+
+static bool Button_Debounce(Digital_In_t Digital_In) {
+}
+
+Clock_Mode_t Change_Mode(Clock_Mode_t Mode) {
+
+    switch (Mode) {
+    case Clock_Init_Mode:
+        Display_Flash_Digits(Board->Screen, 0, 3, 200);
+        Flash_Point(Board->Screen, 1, 1, 200);
+        break;
+    case Clock_Set_Minutes_Mode:
+        Display_Flash_Digits(Board->Screen, 2, 3, 175);
+        break;
+    case Clock_Set_Hours_Mode:
+        Display_Flash_Digits(Board->Screen, 0, 1, 175);
+        break;
+    case Clock_Time_Mode:
+        Flash_Point(Board->Screen, 1, 1, 1000);
+        Display_Flash_Digits(Board->Screen, 0, 3, 0);
+        break;
+    case Clock_Set_Alarm_Mode:
+        Display_Flash_Digits(Board->Screen, 0, 3, 0);
+        All_Points_On(Board->Screen);
+        break;
+    case Clock_Set_Minutes_Alarm_Mode:
+        Display_Flash_Digits(Board->Screen, 2, 3, 200);
+        break;
+    case Clock_Set_Hours_Alarm_Mode:
+        Display_Flash_Digits(Board->Screen, 0, 1, 200);
+        break;
+
+    default:
+        break;
+    }
+    return Mode;
+}
+
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
-    Board_t Board = Board_Create();
+    Board = Board_Create();
     // Creo el objeto Reloj
-    clock_t Clock = Clock_Create(100);
+    Clock = Clock_Create(100);
     // Incializo Tick
     Init_Tick();
-    // Inicializo el reloj en 00:00:00
-    clock_time_t init_time = {0};
-    Clock_Get_Time(Clock, &init_time);
-    // Verifico que correctamente se inicializo en 00:00:00
-    Clock_Set_Time(Clock, &init_time);
-    // Declaro un puntero a la hora del reloj
+    // Defino un puntero a la hora del reloj
     clock_time_t clock_Time = Clock_Time(Clock);
     // Defino un arreglo para almacenar el valor de los displays
     uint8_t value[4] = {0};
     // Defino un arreglo para almacenar el valor de los displays con la alarma
     uint8_t alarm_value[4] = {0};
     // Defino un estado incial del reloj
-    Clock_Mode_t actual_mode = Clock_Init_Mode;
+    Change_Mode(Clock_Init_Mode);
     // Defino un horario de alarma por defecto
     clock_time_t alarm_time = {0};
     // Defino un puntero que guarde la direccion de la hora mientras esta en otro proceso
-    clock_time_t clock_actual_time;
+    // clock_time_t clock_actual_time;
     // Variable para llevar la cuenta inicial de 1 segundo
     uint32_t last_time = 0;
     uint32_t refresh = 0;
     uint32_t inactivity_time = 0;
+    uint32_t button_time = 0;
 
-    // variable para incializar una sola vez el parpadeo
-    bool init;
     // Variable para detectar inactividad
     bool inactivity = true;
     //  Variable que avisa si es la primera inicializacion de tiempo
@@ -156,56 +224,30 @@ int main(void) {
     bool alarm_sounding = false;
 
     while (true) {
-        switch (actual_mode) {
-
-        case Clock_Init_Mode:
-            if (!init) {
-                // Todos los displays se inicializan parpadeando
-                Display_Flash_Digits(Board->Screen, 0, 3, 200);
-                // Se inicializa parpadeando el segundo punto
-                Flash_Point(Board->Screen, 1, 1, 200);
-                // incializo el parpadeo
-                init = true;
-            }
-
+        if (actual_mode == Clock_Init_Mode) {
             // Escribo la pantalla
             Screen_Write_BCD(Board->Screen, value, 4);
-
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-            // Si no se presiona nada cuanto hasta que pasen 30 seg
+            // Si no se setea el tiempo hasta que pasen 30 seg
             if (inactivity) {
                 if (inactivity_time == 0) {
                     inactivity_time = Board_getMillis();
                 } else if (Board_getMillis() - inactivity_time >= 30000) {
                     inactivity = false;
-                    actual_mode = Clock_Time_Mode;
+                    Change_Mode(Clock_Time_Mode);
+                    // Display_Flash_Digits(Board->Screen, 0, 3, 0);
                     inactivity_time = 0;
                 }
             }
-
             // Si se presiona Set_Time (F1) por mas de 3 seg pasamos al modo de configurar los minutos
             if (Delay_Button(Board->Set_Time, &F1_Delay, 3000, &Set_Time_flag)) {
-
-                actual_mode = Clock_Set_Minutes_Mode;
-                init = false;
+                Change_Mode(Clock_Set_Minutes_Mode);
                 first_set = false;
-                refresh = 0;
                 F1_Delay = 0;
                 Set_Time_flag = false;
+                inactivity = true;
+                inactivity_time = 0;
             }
-
-            break;
-
-        case Clock_Set_Minutes_Mode:
-            // hago parpadear los minutos
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 2, 3, 175);
-                init = true;
-            }
+        } else if (actual_mode == Clock_Set_Minutes_Mode) {
 
             // Si se presiona para incrementar el tiempo
             if (Digital_In_Was_Activated(Board->Increment)) {
@@ -221,100 +263,57 @@ int main(void) {
             Clock_Get_Displays_Values(&clock_Time, value);
             Screen_Write_BCD(Board->Screen, value, 4);
 
-            // Refresco la pantalla cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
             // Si se presiona Aceptar cambiamos al modo de configurar la hora
             if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP");
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    // cambio de estado y reinicio banderas
+                    Change_Mode(Clock_Set_Hours_Mode);
                 }
-                actual_mode = Clock_Set_Hours_Mode;
-                init = false;
-                refresh = 0;
             }
 
             // Si se presiona cancelar pasamos al modo inicial o al modo normal dependiendo de donde estabamos
             if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Changed(Board->Cancel)) {
-                    __asm("NOP");
-                }
+
                 if (first_set) {
-                    actual_mode = Clock_Init_Mode;
+                    Change_Mode(Clock_Init_Mode);
                     first_set = false;
 
                 } else {
-                    actual_mode = Clock_Time_Mode;
+                    Change_Mode(Clock_Time_Mode);
                 }
-                refresh = 0;
-                init = false;
             }
-
-            break;
-
-        case Clock_Set_Hours_Mode:
-            // hago parpadear la hora
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 0, 1, 175);
-                init = true;
-            }
-
+        } else if (actual_mode == Clock_Set_Hours_Mode) {
             // Si se presiona para incrementar la hora
             if (Digital_In_Was_Activated(Board->Increment)) {
                 Clock_Increment_Hours(&clock_Time);
-                while (Digital_In_Was_Changed(Board->Increment)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
             }
             // Si se presiona para decrementar la hora
             if (Digital_In_Was_Activated(Board->Decrement)) {
                 Clock_Decrement_Hours(&clock_Time);
-                while (Digital_In_Was_Changed(Board->Decrement)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
             }
 
             // Actualizo el valor de los displays
             Clock_Get_Displays_Values(&clock_Time, value);
             Screen_Write_BCD(Board->Screen, value, 4);
 
-            // Contador para pasar un segundo por interrupcion
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
             // Si se presiona aceptar pasamos al modo de funcionamiento normal del reloj
             if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Change_Mode(Clock_Time_Mode);
+                    Clock_Set_Time(Clock, &clock_Time);
                 }
-                refresh = 0;
-                init = false;
-                actual_mode = Clock_Time_Mode;
-                Clock_Set_Time(Clock, &clock_Time);
             }
+
             // Si es cancelar volvemos al modo de los minutos
             if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Deactivated(Board->Cancel)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Change_Mode(Clock_Set_Minutes_Mode);
                 }
-                actual_mode = Clock_Set_Minutes_Mode;
-                refresh = 0;
-                init = false;
             }
-            break;
-
-        case Clock_Time_Mode:
-            if (!init) {
-                init = true;
-                // Parapadea el punto del 2do display cada 1s
-                Flash_Point(Board->Screen, 1, 1, 1000);
-                Display_Flash_Digits(Board->Screen, 0, 3, 0);
-            }
+        } else if (actual_mode == Clock_Time_Mode) {
 
             if (Board_getMillis() - last_time >= 1000) {
                 // Actualizo last_time
@@ -322,7 +321,6 @@ int main(void) {
                 // Condicion para determinar si avanzo 1 seg
                 Clock_New_Tick(Clock);
                 // Actualizo la hora del reloj
-                // Actualizo el valor de los displays
             }
 
             // Escribo la pantalla con la hora actualizada
@@ -330,17 +328,9 @@ int main(void) {
             Clock_Get_Displays_Values(&clock_Time, value);
             Screen_Write_BCD(Board->Screen, value, 4);
 
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-
-            // Si se presiona Set_Time pasamos a modificar los minutos
+            // Si se presiona Set_Time por 3seg pasamos a modificar los minutos
             if (Delay_Button(Board->Set_Time, &F1_Delay, 2000, &Set_Time_flag)) {
-                actual_mode = Clock_Set_Minutes_Mode;
-                init = false;
-                refresh = 0;
+                Change_Mode(Clock_Set_Minutes_Mode);
                 last_time = 0;
                 F1_Delay = 0;
                 Set_Time_flag = false;
@@ -348,55 +338,59 @@ int main(void) {
 
             // Si se preisona aceptar se activa la alarma
             if (Digital_In_Was_Activated(Board->Accept) && !alarm_sounding) {
-                Clock_Set_Alarm(Clock, true);
-                Select_Point_On(Board->Screen, 3);
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Clock_Set_Alarm(Clock, true);
+                    Select_Point_On(Board->Screen, 3);
+                }
             }
 
             // Si se presiona cancelar se desactiva la alarma
             if (Digital_In_Was_Activated(Board->Cancel) && !alarm_sounding) {
-                Clock_Set_Alarm(Clock, false);
-                All_Points_Off(Board->Screen);
-                init = false;
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Clock_Set_Alarm(Clock, false);
+                    All_Points_Off(Board->Screen);
+                }
             }
 
             //  Si la alarma esta activa y coincide el horario de la alarma con el del reloj se prende el led
             if (Clock_Alarm_Working(Clock, &alarm_time) && !alarm_sounding) {
-                Digital_Out_Activate(Board->Led_3);
-                alarm_sounding = true;
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Digital_Out_Activate(Board->Led_3);
+                    alarm_sounding = true;
+                }
             }
 
             // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
             if (Digital_In_Was_Activated(Board->Accept) && alarm_sounding) {
-                Clock_Set_Alarm_Delay(Clock, 1);
-                Digital_Out_Deactivate(Board->Led_3);
-                alarm_sounding = false;
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Clock_Set_Alarm_Delay(Clock, 1);
+                    Digital_Out_Deactivate(Board->Led_3);
+                    alarm_sounding = false;
+                }
             }
 
             // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
             if (Digital_In_Was_Activated(Board->Cancel) && alarm_sounding) {
-                Clock_Set_Alarm(Clock, true);
-                Digital_Out_Deactivate(Board->Led_3);
-                alarm_sounding = false;
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Clock_Set_Alarm(Clock, true);
+                    Digital_Out_Deactivate(Board->Led_3);
+                    alarm_sounding = false;
+                }
             }
 
             // Si se presiona el boton de alarma por mas de 3 segundos pasa al estado set_alarma
             if (Delay_Button(Board->Set_Alarm, &F2_Delay, 2000, &Set_Alarm_flag)) {
-                actual_mode = Clock_Set_Alarm_Mode;
-                init = false;
-                refresh = 0;
+                Change_Mode(Clock_Set_Alarm_Mode);
                 last_time = 0;
                 F2_Delay = 0;
                 Set_Alarm_flag = false;
             }
-
-            break;
-
-        case Clock_Set_Alarm_Mode:
-            if (!init) {
-                init = true;
-                Display_Flash_Digits(Board->Screen, 0, 3, 0);
-                All_Points_On(Board->Screen);
-            }
+        } else if (actual_mode == Clock_Set_Alarm_Mode) {
             if (first_set_alarm) {
                 Clock_Set_Time_Alarm(Clock, &alarm_time);
                 first_set_alarm = false;
@@ -406,34 +400,17 @@ int main(void) {
             Clock_Get_Displays_Values(&alarm_time, value);
             Screen_Write_BCD(Board->Screen, value, CANT_DISPLAYS);
 
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-
             // Si se presiona Set_Time se setea el horario de la alarma
             if (Digital_In_Was_Activated(Board->Set_Time)) {
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
-                init = false;
-                refresh = 0;
+                Change_Mode(Clock_Set_Minutes_Alarm_Mode);
             }
 
             // Si se presiona el boton de alarma vuelve nuevamente a clock_time_mode
             if (Digital_In_Was_Activated(Board->Set_Alarm)) {
-                actual_mode = Clock_Time_Mode;
-                init = false;
-                refresh = 0;
+                Change_Mode(Clock_Time_Mode);
                 All_Points_Off(Board->Screen);
             }
-            break;
-
-        case Clock_Set_Minutes_Alarm_Mode:
-            // hago parpadear los minutos
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 2, 3, 200);
-                init = true;
-            }
+        } else if (actual_mode == Clock_Set_Minutes_Alarm_Mode) {
 
             // Si se presiona para incrementar el tiempo
             if (Digital_In_Was_Activated(Board->Increment)) {
@@ -449,40 +426,19 @@ int main(void) {
             Clock_Get_Displays_Values(&alarm_time, alarm_value);
             Screen_Write_BCD(Board->Screen, alarm_value, 4);
 
-            // Refresco la pantalla cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
             // Si se presiona Aceptar cambiamos al modo de configurar la hora
             if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP");
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Change_Mode(Clock_Set_Hours_Alarm_Mode);
                 }
-                refresh = 0;
-                actual_mode = Clock_Set_Hours_Alarm_Mode;
-                init = false;
             }
 
-            // Si se presiona cancelar pasamos al modo inicial o al modo normal dependiendo de donde estabamos
+            // Si se presiona cancelar pasamos al modo normal dependiendo de donde estabamos
             if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Changed(Board->Cancel)) {
-                    __asm("NOP");
-                }
-                actual_mode = Clock_Set_Alarm_Mode;
-                refresh = 0;
-                init = false;
+                Change_Mode(Clock_Set_Alarm_Mode);
             }
-            break;
-
-        case Clock_Set_Hours_Alarm_Mode:
-            // hago parpadear la hora
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 0, 1, 200);
-                init = true;
-            }
-
+        } else if (actual_mode == Clock_Set_Hours_Alarm_Mode) {
             // Si se presiona para incrementar la hora
             if (Digital_In_Was_Activated(Board->Increment)) {
                 Clock_Increment_Hours(&alarm_time);
@@ -496,36 +452,25 @@ int main(void) {
             Clock_Get_Displays_Values(&alarm_time, alarm_value);
             Screen_Write_BCD(Board->Screen, alarm_value, 4);
 
-            // Contador para pasar un segundo por interrupcion
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
             // Si se presiona aceptar pasamos al modo de funcionamiento normal del reloj
             if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Changed(Board->Accept)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
+                // espero 10ms
+                if (Button_Debounce(Board->Accept)) {
+                    Change_Mode(Clock_Time_Mode);
+                    Clock_Set_Time_Alarm(Clock, &alarm_time);
+                    All_Points_Off(Board->Screen);
                 }
-                init = false;
-                actual_mode = Clock_Time_Mode;
-                Clock_Set_Time_Alarm(Clock, &alarm_time);
-                refresh = 0;
-                All_Points_Off(Board->Screen);
             }
             // Si es cancelar volvemos al modo de los minutos
             if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Deactivated(Board->Cancel)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
-                refresh = 0;
-                init = false;
+                Change_Mode(Clock_Set_Minutes_Alarm_Mode);
             }
-            break;
+        }
 
-        default:
-            break;
+        // Refresco cada 1ms
+        if (Board_getMillis() - refresh >= 1) {
+            Screen_Refresh(Board->Screen);
+            refresh = Board_getMillis();
         }
     }
 }
