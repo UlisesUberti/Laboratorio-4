@@ -38,16 +38,29 @@
  ** @{ */
 
 /* === Headers files inclusions =============================================================== */
-
+// Primero se incluye el freeRTOS
+#include "FreeRTOS.h"
+// Despues de haber incluido el freertos se incluye el archivo asociado a las tareas, colas, eventos..
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "event_groups.h"
 #include <stdbool.h>
 #include "DigitalOut.h"
 #include "DigitalIn.h"
 #include "bsp.h"
 #include "clock.h"
+#include "ClockTask.h"
 
 /* === Macros definitions ====================================================================== */
 
 #define CANT_DISPLAYS 4
+#define SW_0_EVENT ACCEPT    // Boton "Aceptar"
+#define SW_1_EVENT CANCEL    // Boton "Cancelar"
+#define SW_2_EVENT SET_TIME  // Boton "Setear Tiempo"
+#define SW_3_EVENT SET_ALARM // Boton "Setear Alarma"
+#define SW_4_EVENT DECREMENT // Boton "Decrementar valor"
+#define SW_5_EVENT INCREMENT // Boton "Incrementar valor"
 
 /* === Private data type declarations ========================================================== */
 
@@ -61,6 +74,10 @@ typedef enum {
     Clock_Set_Minutes_Alarm_Mode,
     Clock_Set_Hours_Alarm_Mode,
 } Clock_Mode_t;
+
+static Board_t Board;
+
+static clock_t Clock;
 
 /* === Private variable declarations =========================================================== */
 
@@ -108,30 +125,42 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
 /* === Public function implementation ========================================================= */
 
 int main(void) {
+    // Ahora con freeRTOS vamos a separar las cosas en tareas
+    //  -Actualizar la hora cada 1seg
+    //  -Refrescar pantalla cada 1ms
+    //  -Detectar la pulsacion de botones --> Utiliza Eventos
+    //  Encender AlARMA --> utiliza Eventos
+    //  Habra comunicacion por medio de colas entre la deteccion de botones y la pantalla
+    //  Necesitamos el uso de mutex para la pantalla que es un recurso compartido
+    //  Ya no es necesario el uso del Systick
 
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
-    Board_t Board = Board_Create();
+    Board = Board_Create();
     // Creo el objeto Reloj
-    clock_t Clock = Clock_Create(100);
-    // Incializo Tick
-    Init_Tick();
-    // Inicializo el reloj en 00:00:00
-    clock_time_t init_time = {0};
-    Clock_Get_Time(Clock, &init_time);
-    // Verifico que correctamente se inicializo en 00:00:00
-    Clock_Set_Time(Clock, &init_time);
-    // Declaro un puntero a la hora del reloj
-    clock_time_t clock_Time = Clock_Time(Clock);
-    // Defino un arreglo para almacenar el valor de los displays
-    uint8_t value[4] = {0};
-    // Defino un arreglo para almacenar el valor de los displays con la alarma
-    uint8_t alarm_value[4] = {0};
-    // Defino un estado incial del reloj
-    Clock_Mode_t actual_mode = Clock_Init_Mode;
-    // Defino un horario de alarma por defecto
-    clock_time_t alarm_time = {0};
-    // Defino un puntero que guarde la direccion de la hora mientras esta en otro proceso
-    clock_time_t clock_actual_time;
+    Clock = Clock_Create(100);
+
+    // Declaramos un puntero a una cola
+    QueueHandle_t button_Queue;
+    // Una cola es una estructura FIFO de datos --> 1ero en llegar es 1ero en salir
+    // Para los botones necesitaremos saber cual se presiono y que tiempo
+
+    // Declaramos un handle a un mutex
+    SemaphoreHandle_t screen_Mutex;
+    // Este mutex es la para la pantalla que se comparte entre el reloj y el refresco
+
+    // Declaramos un grupo de eventos (handle al grupo de eventos)
+    EventGroupHandle_t clock_Events;
+    // El grupo de eventos es un conjunto de flags
+    // Un evento seria la activacion de la alarma, cambio de modo del reloj, alarma pospuesta
+
+    // Creo un grupo de eventos
+    clock_Events = xEventGroupCreate();
+
+    // Ahora creamos las tareas
+
+    // Tarea "Clock" para el control de estados y actualizar hora cada 1seg
+    xTaskCreate(ClockTask, "Clock", Clock_Task_Stack_Size, );
+
     // Variable para llevar la cuenta inicial de 1 segundo
     uint32_t last_time = 0;
     uint32_t refresh = 0;
