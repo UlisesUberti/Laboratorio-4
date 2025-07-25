@@ -141,7 +141,7 @@ void Clock_Task(void * args) {
                 Clock_Increment_Minutes(&param->current_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementa minutos
-                Clock_Increment_Minutes(&param->current_time);
+                Clock_Decrement_Minutes(&param->current_time);
             }
         } else if (actual_mode == Clock_Set_Hours_Mode) {
             if (events & SW_0_EVENT) {

@@ -52,8 +52,6 @@ extern "C" {
 
 typedef struct Alarm_Task_Args_s {
     clock_t clock;
-    clock_time_t alarm_time;
-    clock_time_t current_time;
     Board_t Board;
     EventGroupHandle_t clock_events; // grupo de eventos
 } * Alarm_Task_Args_t;

@@ -38,6 +38,7 @@
  ** @{ */
 
 /* === Headers files inclusions =============================================================== */
+
 // Primero se incluye el freeRTOS
 #include "FreeRTOS.h"
 // Despues de haber incluido el freertos se incluye el archivo asociado a las tareas, colas, eventos..
@@ -45,45 +46,49 @@
 #include "queue.h"
 #include "semphr.h"
 #include "event_groups.h"
+
 #include <stdbool.h>
-#include "DigitalOut.h"
-#include "DigitalIn.h"
 #include "bsp.h"
 #include "clock.h"
+#include "DigitalOut.h"
+
+// Archivo de la tarea del reloj
 #include "ClockTask.h"
+// Archivo de la tarea del refresco de pantalla
+#include "RefreshTask.h"
+// Archivo de Tick para controlar 1 seg de reloj
+#include "TickTask.h"
+// Archivo de la tarea para controlar la alarma
+#include "AlarmTask.h"
+// Archivo de la tarea para detectar los botones
+#include "ButtonTask.h"
 
 /* === Macros definitions ====================================================================== */
 
-#define CANT_DISPLAYS 4
-#define SW_0_EVENT ACCEPT    // Boton "Aceptar"
-#define SW_1_EVENT CANCEL    // Boton "Cancelar"
-#define SW_2_EVENT SET_TIME  // Boton "Setear Tiempo"
-#define SW_3_EVENT SET_ALARM // Boton "Setear Alarma"
-#define SW_4_EVENT DECREMENT // Boton "Decrementar valor"
-#define SW_5_EVENT INCREMENT // Boton "Incrementar valor"
+#define ACCEPT SW_0_EVENT    // Boton "Aceptar"
+#define CANCEL SW_1_EVENT    // Boton "Cancelar"
+#define SET_TIME SW_2_EVENT  // Boton "Setear Tiempo"
+#define SET_ALARM SW_3_EVENT // Boton "Setear Alarma"
+#define DECREMENT SW_4_EVENT // Boton "Decrementar valor"
+#define INCREMENT SW_5_EVENT // Boton "Incrementar valor"
 
 /* === Private data type declarations ========================================================== */
 
-typedef enum {
-    Clock_Init_Mode,
-    Clock_Time_Mode,
-    Clock_Set_Minutes_Mode,
-    Clock_Set_Hours_Mode,
-    Clock_Set_Alarm_Mode,
-    Clock_Change_Time_Mode,
-    Clock_Set_Minutes_Alarm_Mode,
-    Clock_Set_Hours_Alarm_Mode,
-} Clock_Mode_t;
-
+// Puntero a al objeto Placa
 static Board_t Board;
-
+// Puntero al objeto Reloj
 static clock_t Clock;
 
 /* === Private variable declarations =========================================================== */
 
 /* === Private function declarations =========================================================== */
 
-static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t duration, bool * flag);
+/**
+ * @brief Funcion Baliza (prende y apaga un par de leds)
+ *
+ * @param args argumento de tarea del S.O.
+ */
+void Blinking(void * args);
 
 /* === Public variable definitions ============================================================= */
 
@@ -91,21 +96,13 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
 
 /* === Private function implementation ========================================================= */
 
-static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t duration, bool * flag) {
-    if (Digital_In_GetState(Digital_In)) {
-        if (!(*flag)) {
-            *start = Board_getMillis();
-            *flag = true;
-        } else if (Board_getMillis() - *start >= duration) {
-            *start = 0;
-            *flag = false;
-            return true;
-        }
-    } else {
-        *start = 0;
-        *flag = false;
+// Creamos una tarea de control
+void Blinking(void * args) {
+    while (true) {
+        Digital_Out_Toggle(Board->Led_2);
+        Digital_Out_Toggle(Board->Led_1);
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
-    return false;
 }
 
 /* === Public function implementation ========================================================= */
@@ -125,10 +122,10 @@ int main(void) {
     // Creo el objeto Reloj
     Clock = Clock_Create(100);
     // Defino una variable que tome la hora con la que se inicializo el reloj
-    clock_time_t Init_Time = Clock_Time(Clock);
+    // clock_time_t Init_Time = Clock_Time(Clock);
 
     // Declaramos un puntero a una cola
-    QueueHandle_t button_Queue;
+    // QueueHandle_t button_Queue;
     // Una cola es una estructura FIFO de datos --> 1ero en llegar es 1ero en salir
     // Para los botones necesitaremos saber cual se presiono y que tiempo
 
@@ -143,408 +140,106 @@ int main(void) {
 
     // Creo un grupo de eventos
     clock_Events = xEventGroupCreate();
+    // Creo el mutex de la pantalla
+    screen_Mutex = xSemaphoreCreateMutex();
+    // Creamos una variable de control para determinar que las tareas se crearon correctamente
+    BaseType_t result;
 
     // Ahora creamos las tareas
 
-    // Tarea "Clock" para el control de estados y actualizar hora cada 1seg
-    xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, );
-
-    // Variable para llevar la cuenta inicial de 1 segundo
-    uint32_t last_time = 0;
-    uint32_t refresh = 0;
-    uint32_t inactivity_time = 0;
-
-    // variable para incializar una sola vez el parpadeo
-    bool init;
-    // Variable para detectar inactividad
-    bool inactivity = true;
-    //  Variable que avisa si es la primera inicializacion de tiempo
-    bool first_set = true;
-
-    // variable para indicar que la alarma cambio su horario por defecto
-    bool first_set_alarm = true;
-    //
-    bool Set_Time_flag = false;
-    uint32_t F1_Delay = 0;
-
-    bool Set_Alarm_flag = false;
-    uint32_t F2_Delay = 0;
-
-    bool alarm_sounding = false;
-
-    while (true) {
-        switch (actual_mode) {
-
-        case Clock_Init_Mode:
-            if (!init) {
-                // Todos los displays se inicializan parpadeando
-                Display_Flash_Digits(Board->Screen, 0, 3, 200);
-                // Se inicializa parpadeando el segundo punto
-                Flash_Point(Board->Screen, 1, 1, 200);
-                // incializo el parpadeo
-                init = true;
-            }
-
-            // Escribo la pantalla
-            Screen_Write_BCD(Board->Screen, value, 4);
-
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-            // Si no se presiona nada cuanto hasta que pasen 30 seg
-            if (inactivity) {
-                if (inactivity_time == 0) {
-                    inactivity_time = Board_getMillis();
-                } else if (Board_getMillis() - inactivity_time >= 30000) {
-                    inactivity = false;
-                    actual_mode = Clock_Time_Mode;
-                    inactivity_time = 0;
-                }
-            }
-
-            // Si se presiona Set_Time (F1) por mas de 3 seg pasamos al modo de configurar los minutos
-            if (Delay_Button(Board->Set_Time, &F1_Delay, 3000, &Set_Time_flag)) {
-
-                actual_mode = Clock_Set_Minutes_Mode;
-                init = false;
-                first_set = false;
-                refresh = 0;
-                F1_Delay = 0;
-                Set_Time_flag = false;
-            }
-
-            break;
-
-        case Clock_Set_Minutes_Mode:
-            // hago parpadear los minutos
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 2, 3, 175);
-                init = true;
-            }
-
-            // Si se presiona para incrementar el tiempo
-            if (Digital_In_Was_Activated(Board->Increment)) {
-                Clock_Increment_Minutes(&clock_Time);
-            }
-
-            // Si se presiona para decrementar el tiempo
-            if (Digital_In_Was_Activated(Board->Decrement)) {
-                Clock_Decrement_Minutes(&clock_Time);
-            }
-
-            // Actualizo el valor de los displays
-            Clock_Get_Displays_Values(&clock_Time, value);
-            Screen_Write_BCD(Board->Screen, value, 4);
-
-            // Refresco la pantalla cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
-            // Si se presiona Aceptar cambiamos al modo de configurar la hora
-            if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP");
-                }
-                actual_mode = Clock_Set_Hours_Mode;
-                init = false;
-                refresh = 0;
-            }
-
-            // Si se presiona cancelar pasamos al modo inicial o al modo normal dependiendo de donde estabamos
-            if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Changed(Board->Cancel)) {
-                    __asm("NOP");
-                }
-                if (first_set) {
-                    actual_mode = Clock_Init_Mode;
-                    first_set = false;
-
-                } else {
-                    actual_mode = Clock_Time_Mode;
-                }
-                refresh = 0;
-                init = false;
-            }
-
-            break;
-
-        case Clock_Set_Hours_Mode:
-            // hago parpadear la hora
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 0, 1, 175);
-                init = true;
-            }
-
-            // Si se presiona para incrementar la hora
-            if (Digital_In_Was_Activated(Board->Increment)) {
-                Clock_Increment_Hours(&clock_Time);
-                while (Digital_In_Was_Changed(Board->Increment)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-            }
-            // Si se presiona para decrementar la hora
-            if (Digital_In_Was_Activated(Board->Decrement)) {
-                Clock_Decrement_Hours(&clock_Time);
-                while (Digital_In_Was_Changed(Board->Decrement)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-            }
-
-            // Actualizo el valor de los displays
-            Clock_Get_Displays_Values(&clock_Time, value);
-            Screen_Write_BCD(Board->Screen, value, 4);
-
-            // Contador para pasar un segundo por interrupcion
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
-            // Si se presiona aceptar pasamos al modo de funcionamiento normal del reloj
-            if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-                refresh = 0;
-                init = false;
-                actual_mode = Clock_Time_Mode;
-                Clock_Set_Time(Clock, &clock_Time);
-            }
-            // Si es cancelar volvemos al modo de los minutos
-            if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Deactivated(Board->Cancel)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-                actual_mode = Clock_Set_Minutes_Mode;
-                refresh = 0;
-                init = false;
-            }
-            break;
-
-        case Clock_Time_Mode:
-            if (!init) {
-                init = true;
-                // Parapadea el punto del 2do display cada 1s
-                Flash_Point(Board->Screen, 1, 1, 1000);
-                Display_Flash_Digits(Board->Screen, 0, 3, 0);
-            }
-
-            if (Board_getMillis() - last_time >= 1000) {
-                // Actualizo last_time
-                last_time = Board_getMillis();
-                // Condicion para determinar si avanzo 1 seg
-                Clock_New_Tick(Clock);
-                // Actualizo la hora del reloj
-                // Actualizo el valor de los displays
-            }
-
-            // Escribo la pantalla con la hora actualizada
-            Clock_Get_Time(Clock, &clock_Time);
-            Clock_Get_Displays_Values(&clock_Time, value);
-            Screen_Write_BCD(Board->Screen, value, 4);
-
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-
-            // Si se presiona Set_Time pasamos a modificar los minutos
-            if (Delay_Button(Board->Set_Time, &F1_Delay, 2000, &Set_Time_flag)) {
-                actual_mode = Clock_Set_Minutes_Mode;
-                init = false;
-                refresh = 0;
-                last_time = 0;
-                F1_Delay = 0;
-                Set_Time_flag = false;
-            }
-
-            // Si se preisona aceptar se activa la alarma
-            if (Digital_In_Was_Activated(Board->Accept) && !alarm_sounding) {
-                Clock_Set_Alarm(Clock, true);
-                Select_Point_On(Board->Screen, 3);
-            }
-
-            // Si se presiona cancelar se desactiva la alarma
-            if (Digital_In_Was_Activated(Board->Cancel) && !alarm_sounding) {
-                Clock_Set_Alarm(Clock, false);
-                All_Points_Off(Board->Screen);
-                init = false;
-            }
-
-            //  Si la alarma esta activa y coincide el horario de la alarma con el del reloj se prende el led
-            if (Clock_Alarm_Working(Clock, &alarm_time) && !alarm_sounding) {
-                Digital_Out_Activate(Board->Led_3);
-                alarm_sounding = true;
-            }
-
-            // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
-            if (Digital_In_Was_Activated(Board->Accept) && alarm_sounding) {
-                Clock_Set_Alarm_Delay(Clock, 1);
-                Digital_Out_Deactivate(Board->Led_3);
-                alarm_sounding = false;
-            }
-
-            // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
-            if (Digital_In_Was_Activated(Board->Cancel) && alarm_sounding) {
-                Clock_Set_Alarm(Clock, true);
-                Digital_Out_Deactivate(Board->Led_3);
-                alarm_sounding = false;
-            }
-
-            // Si se presiona el boton de alarma por mas de 3 segundos pasa al estado set_alarma
-            if (Delay_Button(Board->Set_Alarm, &F2_Delay, 2000, &Set_Alarm_flag)) {
-                actual_mode = Clock_Set_Alarm_Mode;
-                init = false;
-                refresh = 0;
-                last_time = 0;
-                F2_Delay = 0;
-                Set_Alarm_flag = false;
-            }
-
-            break;
-
-        case Clock_Set_Alarm_Mode:
-            if (!init) {
-                init = true;
-                Display_Flash_Digits(Board->Screen, 0, 3, 0);
-                All_Points_On(Board->Screen);
-            }
-            if (first_set_alarm) {
-                Clock_Set_Time_Alarm(Clock, &alarm_time);
-                first_set_alarm = false;
-            }
-
-            // Muestro por pantalla el horario de la alarma
-            Clock_Get_Displays_Values(&alarm_time, value);
-            Screen_Write_BCD(Board->Screen, value, CANT_DISPLAYS);
-
-            // Refresco cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                Screen_Refresh(Board->Screen);
-                refresh = Board_getMillis();
-            }
-
-            // Si se presiona Set_Time se setea el horario de la alarma
-            if (Digital_In_Was_Activated(Board->Set_Time)) {
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
-                init = false;
-                refresh = 0;
-            }
-
-            // Si se presiona el boton de alarma vuelve nuevamente a clock_time_mode
-            if (Digital_In_Was_Activated(Board->Set_Alarm)) {
-                actual_mode = Clock_Time_Mode;
-                init = false;
-                refresh = 0;
-                All_Points_Off(Board->Screen);
-            }
-            break;
-
-        case Clock_Set_Minutes_Alarm_Mode:
-            // hago parpadear los minutos
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 2, 3, 200);
-                init = true;
-            }
-
-            // Si se presiona para incrementar el tiempo
-            if (Digital_In_Was_Activated(Board->Increment)) {
-                Clock_Increment_Minutes(&alarm_time);
-            }
-
-            // Si se presiona para decrementar el tiempo
-            if (Digital_In_Was_Activated(Board->Decrement)) {
-                Clock_Decrement_Minutes(&alarm_time);
-            }
-
-            // Actualizo el valor de los displays
-            Clock_Get_Displays_Values(&alarm_time, alarm_value);
-            Screen_Write_BCD(Board->Screen, alarm_value, 4);
-
-            // Refresco la pantalla cada 1ms
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
-            // Si se presiona Aceptar cambiamos al modo de configurar la hora
-            if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Activated(Board->Accept)) {
-                    __asm("NOP");
-                }
-                refresh = 0;
-                actual_mode = Clock_Set_Hours_Alarm_Mode;
-                init = false;
-            }
-
-            // Si se presiona cancelar pasamos al modo inicial o al modo normal dependiendo de donde estabamos
-            if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Changed(Board->Cancel)) {
-                    __asm("NOP");
-                }
-                actual_mode = Clock_Set_Alarm_Mode;
-                refresh = 0;
-                init = false;
-            }
-            break;
-
-        case Clock_Set_Hours_Alarm_Mode:
-            // hago parpadear la hora
-            if (!init) {
-                Display_Flash_Digits(Board->Screen, 0, 1, 200);
-                init = true;
-            }
-
-            // Si se presiona para incrementar la hora
-            if (Digital_In_Was_Activated(Board->Increment)) {
-                Clock_Increment_Hours(&alarm_time);
-            }
-            // Si se presiona para decrementar la hora
-            if (Digital_In_Was_Activated(Board->Decrement)) {
-                Clock_Decrement_Hours(&alarm_time);
-            }
-
-            // Actualizo el valor de los displays
-            Clock_Get_Displays_Values(&alarm_time, alarm_value);
-            Screen_Write_BCD(Board->Screen, alarm_value, 4);
-
-            // Contador para pasar un segundo por interrupcion
-            if (Board_getMillis() - refresh >= 1) {
-                refresh = Board_getMillis();
-                Screen_Refresh(Board->Screen);
-            }
-
-            // Si se presiona aceptar pasamos al modo de funcionamiento normal del reloj
-            if (Digital_In_Was_Activated(Board->Accept)) {
-                while (Digital_In_Was_Changed(Board->Accept)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-                init = false;
-                actual_mode = Clock_Time_Mode;
-                Clock_Set_Time_Alarm(Clock, &alarm_time);
-                refresh = 0;
-                All_Points_Off(Board->Screen);
-            }
-            // Si es cancelar volvemos al modo de los minutos
-            if (Digital_In_Was_Activated(Board->Cancel)) {
-                while (Digital_In_Was_Deactivated(Board->Cancel)) {
-                    __asm("NOP"); // instruccion para que no figure como vacio
-                }
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
-                refresh = 0;
-                init = false;
-            }
-            break;
-
-        default:
-            break;
-        }
+    // Si el mutex y el grupo de eventos se crearon entonces creamos la primera tarea
+    if (screen_Mutex && clock_Events) {
+        Tick_Task_Args_t Tick_Param = malloc(sizeof(*Tick_Param));
+        Tick_Param->clock_events = clock_Events;
+        result = xTaskCreate(Tick_Task, "Tick", Tick_Task_Stack_Size, Tick_Param, tskIDLE_PRIORITY + 5, NULL);
     }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Refresh_Task_Args_t Refresh_Param = malloc(sizeof(*Refresh_Param));
+        Refresh_Param->Board = Board;
+        Refresh_Param->clock_events = clock_Events;
+        Refresh_Param->screen_Mutex = screen_Mutex;
+        result =
+            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 4, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = ACCEPT;
+        SW_Param->Switch = Board->Accept;
+        result = xTaskCreate(Button_Task, "Accept", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = CANCEL;
+        SW_Param->Switch = Board->Cancel;
+        result = xTaskCreate(Button_Task, "Cancel", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = SET_TIME;
+        SW_Param->Switch = Board->Set_Time;
+        result = xTaskCreate(Button_Task, "SetTime", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = SET_ALARM;
+        SW_Param->Switch = Board->Set_Alarm;
+        result = xTaskCreate(Button_Task, "SetAlarm", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = DECREMENT;
+        SW_Param->Switch = Board->Decrement;
+        result = xTaskCreate(Button_Task, "Decrement", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t SW_Param = malloc(sizeof(*SW_Param));
+        SW_Param->Board = Board;
+        SW_Param->clock_events = clock_Events;
+        SW_Param->event_bit = INCREMENT;
+        SW_Param->Switch = Board->Increment;
+        result = xTaskCreate(Button_Task, "Increment", Button_Task_Stack_Size, SW_Param, tskIDLE_PRIORITY + 3, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Alarm_Task_Args_t Alarm_Param = malloc(sizeof(*Alarm_Param));
+        Alarm_Param->Board = Board;
+        Alarm_Param->clock_events = clock_Events;
+        Alarm_Param->clock = Clock;
+        result = xTaskCreate(Alarm_Task, "Alarm", Alarm_Task_Stack_Size, Alarm_Param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Clock_Task_Args_t Clock_Param = malloc(sizeof(*Clock_Param));
+        Clock_Param->clock = Clock;
+        Clock_Param->Board = Board;
+        Clock_Param->clock_Events = clock_Events;
+        Clock_Param->screen_Mutex = screen_Mutex;
+        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 2, NULL);
+    }
+    // Si alguna de las tareas no puede crearse ponemos una baliza
+    if (result != pdPASS) {
+        xTaskCreate(Blinking, "Baliza", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    }
+
+    // Incializamos el Sistema Operativo (FreeRTOS)
+    vTaskStartScheduler();
 }
 
 /* === End of documentation ==================================================================== */
