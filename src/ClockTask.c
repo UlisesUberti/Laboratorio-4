@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
  * */
 
 /* === Headers files inclusions ==================================================================================== */
+
 #include "ClockTask.h"
 #include "ButtonTask.h"
 #include <stdio.h>
@@ -30,6 +31,7 @@ SPDX-License-Identifier: MIT
 #include <stdbool.h>
 #include "clock.h"
 #include "TickTask.h"
+#include "AlarmTask.h"
 
 /* === Macros definitions ========================================================================================== */
 
@@ -54,6 +56,10 @@ void Clock_Task(void * args) {
     Clock_Task_Args_t param = args;
     // Defino eventos del tipo EventBits_t para esperar los eventos
     EventBits_t events;
+    // Defino un arreglo con el valor inicial de la hora del reloj
+    uint8_t value[4] = {0};
+    // Bandera para la alarma
+    bool alarm_sounding = false;
     // loop infinito
     while (true) {
         // Espero que ocurra un evento
@@ -132,8 +138,10 @@ void Clock_Task(void * args) {
                 actual_mode = Clock_Time_Mode;
             } else if (events & SW_5_EVENT) {
                 // Incrementa minutos
+                Clock_Increment_Minutes(&param->current_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementa minutos
+                Clock_Increment_Minutes(&param->current_time);
             }
         } else if (actual_mode == Clock_Set_Hours_Mode) {
             if (events & SW_0_EVENT) {
@@ -144,14 +152,22 @@ void Clock_Task(void * args) {
                 actual_mode = Clock_Set_Minutes_Mode;
             } else if (events & SW_5_EVENT) {
                 // Incrementa horas
+                Clock_Increment_Hours(&param->current_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementa horas
+                Clock_Decrement_Hours(&param->current_time);
             }
         } else if (actual_mode == Clock_Time_Mode) {
             if (events & SW_0_EVENT) {
                 // activa alarma
+                xEventGroupSetBits(param->clock_Events, ALARM_ON_EVENT);
+                Clock_Set_Alarm(param->clock, true);
+                Select_Point_On(param->Board->Screen, 3);
             } else if (events & SW_1_EVENT) {
                 // desactiva alarma
+                xEventGroupSetBits(param->clock_Events, ALARM_OFF_EVENT);
+                Clock_Set_Alarm(param->clock, false);
+                All_Points_Off(param->Board->Screen);
             } else if (events & SW_3_EVENT) {
                 // Cambia el estado
                 actual_mode = Clock_Set_Alarm_Mode;
@@ -159,6 +175,24 @@ void Clock_Task(void * args) {
                 // Cambia el estado
                 actual_mode = Clock_Set_Minutes_Mode;
             }
+            // Si la hora actual y la hora de alarma coinciden y si no estaba sonando entonces se activa evento
+            if (Clock_Alarm_Working(param->clock, &param->alarm_time) && !alarm_sounding) {
+                xEventGroupSetBits(param->clock_Events, ALARM_TIME_EVENT);
+                alarm_sounding = true;
+            }
+            // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
+            if ((events & SW_0_EVENT) && alarm_sounding) {
+                xEventGroupSetBits(param->clock_Events, ALARM_SNOOZE_EVENT);
+                Clock_Set_Alarm_Delay(param->clock, 1);
+                alarm_sounding = false;
+            }
+            // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
+            if ((events & SW_1_EVENT) && alarm_sounding) {
+                xEventGroupSetBits(param->clock_Events, ALARM_DEACTIVATE_EVENT);
+                Clock_Set_Alarm(param->clock, true);
+                alarm_sounding = false;
+            }
+
         } else if (actual_mode == Clock_Set_Alarm_Mode) {
             if ((events & SW_2_EVENT) && (events & SW_LONG_DURATION_EVENT)) {
                 // Cambia el estado
@@ -176,8 +210,10 @@ void Clock_Task(void * args) {
                 actual_mode = Clock_Time_Mode;
             } else if (events & SW_5_EVENT) {
                 // Incrementar minutos
+                Clock_Increment_Minutes(&param->alarm_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementar minutos
+                Clock_Decrement_Minutes(&param->alarm_time);
             }
         } else if (actual_mode == Clock_Set_Hours_Alarm_Mode) {
             if (events & SW_0_EVENT) {
@@ -186,10 +222,31 @@ void Clock_Task(void * args) {
             } else if (events & SW_1_EVENT) {
                 // cambia el estado
                 actual_mode = Clock_Set_Minutes_Alarm_Mode;
+            } else if (events & SW_5_EVENT) {
+                // Incrementar minutos
+                Clock_Increment_Hours(&param->alarm_time);
+            } else if (events & SW_4_EVENT) {
+                // Decrementar minutos
+                Clock_Decrement_Hours(&param->alarm_time);
             }
+        }
+
+        // Escribimos y actualizamos pantalla
+        if ((actual_mode == Clock_Set_Alarm_Mode) || (actual_mode == Clock_Set_Minutes_Alarm_Mode) ||
+            (actual_mode == Clock_Set_Hours_Alarm_Mode)) {
+            Clock_Get_Displays_Values(&param->alarm_time, value);
+            Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
+        } else if (actual_mode == Clock_Time_Mode) {
+            Clock_Get_Time(param->clock, &param->current_time);
+            Clock_Get_Displays_Values(&param->current_time, value);
+            Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
+        } else {
+            Clock_Get_Displays_Values(&param->current_time, value);
+            Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
         }
     }
 }
+
 /* === Private variable definitions* ================================================================================*/
 
 /* === Public variable definitions* =================================================================================*/

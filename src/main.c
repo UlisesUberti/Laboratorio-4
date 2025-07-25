@@ -83,14 +83,6 @@ static clock_t Clock;
 
 /* === Private function declarations =========================================================== */
 
-/**
- * @brief Funcion para obtener los valores de los segmentos de los displays
- *
- * @param clock_time puntero al objeto reloj
- * @param value arreglo con los segmentos en BCD
- */
-static void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]);
-
 static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t duration, bool * flag);
 
 /* === Public variable definitions ============================================================= */
@@ -98,13 +90,6 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
 /* === Private variable definitions ============================================================ */
 
 /* === Private function implementation ========================================================= */
-
-static void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]) {
-    value[0] = clock_time->time.hours[1];
-    value[1] = clock_time->time.hours[0];
-    value[2] = clock_time->time.minutes[1];
-    value[3] = clock_time->time.minutes[0];
-}
 
 static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t duration, bool * flag) {
     if (Digital_In_GetState(Digital_In)) {
@@ -122,6 +107,7 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
     }
     return false;
 }
+
 /* === Public function implementation ========================================================= */
 
 int main(void) {
@@ -138,6 +124,8 @@ int main(void) {
     Board = Board_Create();
     // Creo el objeto Reloj
     Clock = Clock_Create(100);
+    // Defino una variable que tome la hora con la que se inicializo el reloj
+    clock_time_t Init_Time = Clock_Time(Clock);
 
     // Declaramos un puntero a una cola
     QueueHandle_t button_Queue;
@@ -159,7 +147,7 @@ int main(void) {
     // Ahora creamos las tareas
 
     // Tarea "Clock" para el control de estados y actualizar hora cada 1seg
-    xTaskCreate(ClockTask, "Clock", Clock_Task_Stack_Size, );
+    xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, );
 
     // Variable para llevar la cuenta inicial de 1 segundo
     uint32_t last_time = 0;

@@ -17,13 +17,13 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-/** @file TickTask.c
- * @brief Código fuente de TickTask.c
+/** @file RefreshTask.c
+ * @brief Código fuente de RefreshTask.c
  * @author Uberti, Ulises Leandro
  * */
 
 /* === Headers files inclusions ==================================================================================== */
-#include "TickTask.h"
+#include "RefreshTask.h"
 #include "ButtonTask.h"
 #include <stdio.h>
 #include "chip.h"
@@ -31,6 +31,8 @@ SPDX-License-Identifier: MIT
 #include "bsp.h"
 
 /* === Macros definitions ========================================================================================== */
+
+#define REFRESH 1 // [ms]
 
 /* === Private data type declarations ============================================================================== */
 
@@ -44,20 +46,20 @@ SPDX-License-Identifier: MIT
 
 /* === Public function implementation ============================================================================== */
 
-void Tick_Task(void * args) {
-    Tick_Task_Args_t parameters = args;
-    // Declaro una variable del tipo TickType
-    TickType_t last_time;
-    // La incializo con la funcion de FreeRTOS para contar Ticks
+void Refresh_Task(void * args) {
+    Refresh_Task_Args_t parameters = args;
+    TickType_t last_time, duration;
     last_time = xTaskGetTickCount();
-    // Declaro una variable que representa el tiempo total
-    TickType_t duration = pdMS_TO_TICKS(1000);
-
+    // Duracion de REFRESH [ms]
+    duration = pdMS_TO_TICKS(REFRESH);
     while (true) {
-        // Utilizo una funcion de FreeRTOS para que la tarea se bloquee un segundo con periodo fijo
-        vTaskDelayUntil(&last_time, duration);
-        // Una vez que paso 1 seg se dispara el evento
-        xEventGroupSetBits(parameters->clock_events, TICK_1_SECOND_EVENT);
+        // Verifico que el mutex este liberado
+        if (xSemaphoreTake(parameters->screen_Mutex, portMAX_DELAY)) {
+            Screen_Refresh(parameters->Board->Screen);
+            xSemaphoreGive(parameters->screen_Mutex);
+        }
+        // bloqueo la tarea durante REFRESH ms con un periodo fijo
+        xTaskDelayUntil(&last_time, duration);
     }
 }
 /* === End of documentation ======================================================================================== */

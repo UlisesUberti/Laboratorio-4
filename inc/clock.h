@@ -109,6 +109,14 @@ void Clock_Decrement_Hours(clock_time_t * clock_time);
 void Clock_New_Tick(clock_t clock);
 
 /**
+ * @brief Funcion para obtener los valores de los segmentos de los displays
+ *
+ * @param clock_time puntero al objeto reloj
+ * @param value arreglo con los segmentos en BCD
+ */
+void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]);
+
+/**
  * @brief Funcion para setaer el horario de la alarma
  *
  * @param clock objeto reloj

@@ -23,12 +23,15 @@ SPDX-License-Identifier: MIT
  * */
 
 /* === Headers files inclusions ==================================================================================== */
-#include "TickTask.h"
+#include "AlarmTask.h"
+#include "ClockTask.h"
 #include "ButtonTask.h"
 #include <stdio.h>
 #include "chip.h"
 #include <stdbool.h>
 #include "bsp.h"
+#include "clock.h"
+#include "DigitalOut.h"
 
 /* === Macros definitions ========================================================================================== */
 
@@ -44,20 +47,28 @@ SPDX-License-Identifier: MIT
 
 /* === Public function implementation ============================================================================== */
 
-void Tick_Task(void * args) {
-    Tick_Task_Args_t parameters = args;
-    // Declaro una variable del tipo TickType
-    TickType_t last_time;
-    // La incializo con la funcion de FreeRTOS para contar Ticks
-    last_time = xTaskGetTickCount();
-    // Declaro una variable que representa el tiempo total
-    TickType_t duration = pdMS_TO_TICKS(1000);
+void Alarm_Task(void * args) {
+    Alarm_Task_Args_t parameters = args;
+    EventBits_t events;
 
     while (true) {
-        // Utilizo una funcion de FreeRTOS para que la tarea se bloquee un segundo con periodo fijo
-        vTaskDelayUntil(&last_time, duration);
-        // Una vez que paso 1 seg se dispara el evento
-        xEventGroupSetBits(parameters->clock_events, TICK_1_SECOND_EVENT);
+        parameters->current_time = Clock_Time(parameters->clock);
+        events = xEventGroupWaitBits(parameters->clock_events,
+                                     ALARM_DEACTIVATE_EVENT | ALARM_OFF_EVENT | ALARM_ON_EVENT | ALARM_SNOOZE_EVENT |
+                                         ALARM_TIME_EVENT,
+                                     pdTRUE, pdFALSE, portMAX_DELAY);
+        if (parameters) {
+            if ((events & ALARM_ON_EVENT) && (events & ALARM_TIME_EVENT)) {
+                // Prende led indicando alarma activa
+                Digital_Out_Activate(parameters->Board->Led_3);
+            } else if ((events & ALARM_ON_EVENT) && (events & ALARM_SNOOZE_EVENT)) {
+                // Apaga el led de la alarma activa
+                Digital_Out_Deactivate(parameters->Board->Led_3);
+            } else if ((events & ALARM_OFF_EVENT)) {
+                // Aapaga el led de la alarma activa
+                Digital_Out_Deactivate(parameters->Board->Led_3);
+            }
+        }
     }
 }
 /* === End of documentation ======================================================================================== */

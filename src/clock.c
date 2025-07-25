@@ -170,6 +170,13 @@ void Clock_Decrement_Hours(clock_time_t * clock_Time) {
     }
 }
 
+void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]) {
+    value[0] = clock_time->time.hours[1];
+    value[1] = clock_time->time.hours[0];
+    value[2] = clock_time->time.minutes[1];
+    value[3] = clock_time->time.minutes[0];
+}
+
 void Clock_New_Tick(clock_t clock) {
     clock->curren_time.time.seconds[0]++;
     // Si el reloj esta por encima de 00:00:09 entonces
