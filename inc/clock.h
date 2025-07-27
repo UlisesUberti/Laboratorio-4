@@ -62,13 +62,6 @@ typedef struct clock_s * clock_t;
 clock_t Clock_Create(uint16_t Ticks_Per_Second);
 
 /**
- * @brief
- *
- * @param clock
- */
-void Clock_Init(clock_t clock);
-
-/**
  * @brief Funcion para actulizar el estado de la hora del reloj
  *
  * @param clock objeto reloj
@@ -96,9 +89,40 @@ clock_time_t Clock_Time(clock_t Clock);
  */
 bool Clock_Set_Time(clock_t clock, clock_time_t * new_time);
 
+/**
+ * @brief Funcion para obtener los valores de los segmentos de los displays
+ *
+ * @param clock_time puntero al objeto reloj
+ * @param value arreglo con los segmentos en BCD
+ */
+void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]);
+
+/**
+ * @brief Funcion para incrementar el valor de los minutos
+ *
+ * @param clock_time puntero a al arreglo con la hora
+ */
 void Clock_Increment_Minutes(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para decrementar el valor de los minutos
+ *
+ * @param clock_time puntero al arreglo de la hora
+ */
 void Clock_Decrement_Minutes(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para incrementar el valor de la hora
+ *
+ * @param clock_time puntero al arreglo de la hora
+ */
 void Clock_Increment_Hours(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para decrementar el valor de la hora
+ *
+ * @param clock_time puntero al arreglo de la hora
+ */
 void Clock_Decrement_Hours(clock_time_t * clock_time);
 
 /**

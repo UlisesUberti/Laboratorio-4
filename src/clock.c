@@ -119,6 +119,13 @@ clock_time_t Clock_Time(clock_t Clock) {
     return invalid;
 }
 
+void Clock_Get_Displays_Values(clock_time_t * clock_time, uint8_t value[]) {
+    value[0] = clock_time->time.hours[1];
+    value[1] = clock_time->time.hours[0];
+    value[2] = clock_time->time.minutes[1];
+    value[3] = clock_time->time.minutes[0];
+}
+
 void Clock_Increment_Minutes(clock_time_t * clock_Time) {
     clock_Time->time.minutes[0]++;
     if (clock_Time->time.minutes[0] == 10) {
