@@ -80,7 +80,7 @@ bool Clock_Get_Time(clock_t clock, clock_time_t * result);
 clock_time_t Clock_Time(clock_t Clock);
 
 /**
- * @brief Funcion para cargar la hora del reloj
+ * @brief Funcion para cambiar la hora del reloj
  *
  * @param clock objeto reloj
  * @param new_time estructura con hora,minutos,segundos
@@ -153,12 +153,12 @@ bool Clock_Set_Time_Alarm(clock_t clock, clock_time_t * alarm_time);
 bool Clock_Alarm_Working(clock_t clock, clock_time_t * alarm);
 
 /**
- * @brief Funcion para apagar la alarma
+ * @brief Funcion para apagar/prender la alarma
  *
  * @param clock objeto reloj
  * @param Encendida true si la alarma se activa y false si se desactiva
- * @return true
- * @return false
+ * @return true si la alarma esta activa
+ * @return false si la alarma esta desactivada
  */
 bool Clock_Set_Alarm(clock_t clock, bool Encendida);
 
@@ -167,7 +167,7 @@ bool Clock_Set_Alarm(clock_t clock, bool Encendida);
  *
  * @param clock objeto alarma
  * @param delay_time minutos de delay
- * @return clock_time_t
+ * @return clock_time_t el horario de la alarma con delay
  */
 clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time);
 
@@ -175,7 +175,7 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time);
  * @brief Funcion para obtener la hora de la alarma
  *
  * @param clock objeto reloj
- * @return clock_time_t
+ * @return clock_time_t el horario de la alarma
  */
 clock_time_t Clock_Alarm(clock_t clock);
 

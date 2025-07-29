@@ -91,6 +91,7 @@ bool Clock_Set_Time(clock_t clock, clock_time_t * result) {
     uint8_t hours = result->time.hours[1] * 10 + result->time.hours[0];
     // Condicional para no ingresar un horario invalido
     if (hours < 24 && minutes < 60 && seconds < 60) {
+        // se copia en clock->current_time el valor de hora ingresado --> clock lleva la hora
         memcpy(&clock->curren_time, result, sizeof(clock_time_t));
         clock->valid = true;
     } else {
@@ -106,6 +107,7 @@ bool Clock_Set_Time(clock_t clock, clock_time_t * result) {
 bool Clock_Get_Time(clock_t clock, clock_time_t * new_time) {
     //  memcpy para copiar los bytes del arreglo con la hora
     if (clock->valid) {
+        // memcpy copia current_time en new_time si current_time es un horario valido
         memcpy(new_time, &clock->curren_time, sizeof(clock_time_t));
     }
     return clock->valid;
@@ -246,10 +248,10 @@ bool Clock_Alarm_Working(clock_t clock, clock_time_t * alarm) {
     // Si la alarma esta activada y coiciden la hora del reloj con la hora esperada de la alarma entonces:
     if (memcmp(expect_alarm->bcd, clock->curren_time.bcd, sizeof(clock->alarm.bcd)) == 0 && clock->Alarm_Active) {
         result = true;
-        // Desactivo el delay por que volvio a sonar
+        // Desactivo el delay porque volvio a sonar
         clock->Delay_Active = false;
         // Regreso la alarma a su valor inicial para que vuelva a sonar a la misma hora al dia siguiente
-        memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
+        // memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
     }
     // Retorno si la alarma sono o no
     return result;
@@ -268,12 +270,16 @@ bool Clock_Set_Alarm(clock_t clock, bool Encendida) {
 clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
     // delay_time deben ser minutos
     clock->delay = delay_time;
+    clock_time_t init_alarm_time;
     // Si es el primer delay
     if (clock->Delay_Active == false) {
-        memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
+        // memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
+        init_alarm_time = clock->alarm;
+    } else {
+        init_alarm_time = clock->time_alarm_with_delay;
     }
-    uint8_t Units_Minutes = clock->time_alarm_with_delay.time.minutes[0];
-    uint8_t Tens_Minutes = clock->time_alarm_with_delay.time.minutes[1];
+    uint8_t Units_Minutes = init_alarm_time.time.minutes[0];
+    uint8_t Tens_Minutes = init_alarm_time.time.minutes[1];
     // Escribo los minutos totales
     uint8_t Total_Minutes = Units_Minutes + Tens_Minutes * 10 + delay_time;
     // Operador % permite obtener los minutos, si se pasa de 60 tambien obtiene correctamente
@@ -285,8 +291,8 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
     clock->time_alarm_with_delay.time.minutes[1] = New_Minutes / 10;
 
     // hago los mismo para la hora
-    uint8_t Units_Hours = clock->time_alarm_with_delay.time.hours[0];
-    uint8_t Tens_Hours = clock->time_alarm_with_delay.time.hours[1];
+    uint8_t Units_Hours = init_alarm_time.time.hours[0];
+    uint8_t Tens_Hours = init_alarm_time.time.hours[1];
     uint8_t Total_Hours = Units_Hours + Tens_Hours * 10 + Pass_Hours;
     uint8_t New_Hour = Total_Hours % 24;
     clock->time_alarm_with_delay.time.hours[0] = New_Hour % 10;
