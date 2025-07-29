@@ -48,11 +48,10 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 
-//Declaramos un struct para pasarle luego los argumentos a la tarea
-
+// Declaramos un struct para pasarle luego los argumentos a la tarea
 typedef struct Refresh_Task_Args_s {
-    Board_t Board;
-    EventGroupHandle_t clock_events; //grupo de eventos
+    Board_t Board;                   // puntero al objeto placa
+    EventGroupHandle_t clock_events; // grupo de eventos
     SemaphoreHandle_t screen_Mutex;  // Handle al mutex de la pantalla
 } * Refresh_Task_Args_t;
 
@@ -62,6 +61,11 @@ typedef struct Refresh_Task_Args_s {
 
 // Declaramos la funcione de la tarea, estructura: void nameTask(void*);
 
+/**
+ * @brief Tarea Refresco
+ * Se encarga de refrescar la pantalla cada 1[ms]
+ * @param args
+ */
 void Refresh_Task(void * args);
 
 /* === End of conditional blocks =================================================================================== */

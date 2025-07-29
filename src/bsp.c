@@ -89,17 +89,18 @@ static void Init_Digits(void);
 static void Init_Segments(void);
 
 /**
- * @brief Funcion apra inicializar las teclas
+ * @brief Funcion para inicializar las teclas
  *
  */
 static void Init_Switches(void);
 
+/**
+ * @brief Funcion para inicializar los leds
+ *
+ */
 static void Init_Leds(void);
 
 /* === Private variable definitions ================================================================================ */
-
-// Inicializo una variable para contar milisegundos
-static volatile uint32_t millis = 0;
 
 // estructura con los punteros a las funciones
 static const struct screen_driver_s screen_driver = {.Digit_Turn_On = Digit_Turn_On,
@@ -295,21 +296,6 @@ Board_t Board_Create() {
     }
     // Retorno el puntero a la estructura que almacena los objetos definidos
     return Board;
-}
-
-uint32_t Board_getMillis(void) {
-    return millis;
-}
-
-void Init_Tick(void) {
-    // Una funcion proporcionada por el fabricante que actualiza SystemCoreClock
-    SystemCoreClockUpdate();
-    // Funcion para configurar el timer Systick que genera la interrupcion peridodica
-    SysTick_Config(SystemCoreClock / FRECUENCIA_TICK);
-}
-
-void SysTick_Handler(void) {
-    millis++;
 }
 
 /* === End of documentation ======================================================================================== */

@@ -45,14 +45,14 @@ extern "C" {
 
 // Realizo una mascara de bits correspondiente a los eventos
 
-#define SW_0_EVENT (1 << 0)             //
-#define SW_1_EVENT (1 << 1)             //
-#define SW_2_EVENT (1 << 2)             //
-#define SW_3_EVENT (1 << 3)             //
-#define SW_4_EVENT (1 << 4)             //
-#define SW_5_EVENT (1 << 5)             //
-#define SW_6_EVENT (1 << 6)             //
-#define SW_LONG_DURATION_EVENT (1 << 7) // Evento
+#define SW_0_EVENT (1 << 0)             // Evento boton 0
+#define SW_1_EVENT (1 << 1)             // Evento boton 1
+#define SW_2_EVENT (1 << 2)             // Evento boton 2
+#define SW_3_EVENT (1 << 3)             // Evento boton 3
+#define SW_4_EVENT (1 << 4)             // Evento boton 4
+#define SW_5_EVENT (1 << 5)             // Evento boton 5
+#define SW_6_EVENT (1 << 6)             // Evento boton 6
+#define SW_LONG_DURATION_EVENT (1 << 7) // Evento Presionado durante x tiempo el boton
 
 // Cantidad minima de stack asignada a la tarea
 #define Button_Task_Stack_Size (2 * configMINIMAL_STACK_SIZE)
@@ -74,6 +74,12 @@ typedef struct Button_Task_Args_s {
 
 // Declaramos las funciones de la tarea, estructura: void nameTask(void*);
 
+/**
+ * @brief Tarea del boton
+ * Tarea que se encarga de avisar mediante un evento cuando un boton fue presionado
+ * ya sea de corta o larga duracion
+ * @param args puntero a los parametros a pasarle comoa argumento
+ */
 void Button_Task(void * args);
 
 /* === End of conditional blocks =================================================================================== */

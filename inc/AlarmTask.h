@@ -49,10 +49,9 @@ extern "C" {
 /* === Public data type declarations =============================================================================== */
 
 // Declaramos un struct para pasarle luego los argumentos a la tarea
-
 typedef struct Alarm_Task_Args_s {
-    clock_t clock;
-    Board_t Board;
+    clock_t clock;                   // Puntero al objeto reloj
+    Board_t Board;                   // Puntero al objeto placa
     EventGroupHandle_t clock_events; // grupo de eventos
 } * Alarm_Task_Args_t;
 
@@ -62,6 +61,11 @@ typedef struct Alarm_Task_Args_s {
 
 // Declaramos las funciones de la tarea, estructura: void nameTask(void*);
 
+/**
+ * @brief Tarea Alarma
+ * Se encarga de encender o apagar la alarma segun corresponda el evento
+ * @param args puntero a los parametros a pasarle como argumento
+ */
 void Alarm_Task(void * args);
 
 /* === End of conditional blocks =================================================================================== */

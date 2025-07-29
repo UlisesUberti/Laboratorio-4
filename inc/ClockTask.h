@@ -43,6 +43,7 @@ extern "C" {
 
 /* === Public macros definitions =================================================================================== */
 
+// Cantidad de displays
 #define CANT_DISPLAYS 4
 
 // Cantidad minima de stack asignada a la tarea
@@ -80,6 +81,12 @@ typedef struct Clock_Task_Args_s {
 
 // Declaramos las funciones de la tarea, estructura: void nameTask(void*);
 
+/**
+ * @brief Tarea Reloj
+ * Se encarga de avanzar cada 1 seg la hora y manejar los modos
+ * avisa si es momento de la alarma mediante un evento
+ * @param args
+ */
 void Clock_Task(void * args);
 
 /* === End of conditional blocks =================================================================================== */

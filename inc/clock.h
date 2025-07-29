@@ -36,8 +36,13 @@ extern "C" {
 #endif
 
 /* === Public macros definitions =================================================================================== */
+
 /* === Public data type declarations =============================================================================== */
 
+/**
+ * @brief tipo de dato con la estructura de la hora y el arreglo en BCD
+ *
+ */
 typedef union {
     struct {
         uint8_t seconds[2];
@@ -47,6 +52,7 @@ typedef union {
     uint8_t bcd[6];
 } clock_time_t;
 
+// Puntero al objeto reloj a crear
 typedef struct clock_s * clock_t;
 
 /* === Public variable declarations ================================================================================ */
@@ -60,13 +66,6 @@ typedef struct clock_s * clock_t;
  * @return clock_t puntero a la estructura creada
  */
 clock_t Clock_Create(uint16_t Ticks_Per_Second);
-
-/**
- * @brief
- *
- * @param clock
- */
-void Clock_Init(clock_t clock);
 
 /**
  * @brief Funcion para actulizar el estado de la hora del reloj
@@ -96,9 +95,32 @@ clock_time_t Clock_Time(clock_t Clock);
  */
 bool Clock_Set_Time(clock_t clock, clock_time_t * new_time);
 
+/**
+ * @brief Funcion para incrementar los minutos
+ *
+ * @param clock_time puntero al arreglo con la hora en BCD
+ */
 void Clock_Increment_Minutes(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para decrementar los minutos
+ *
+ * @param clock_time puntero al arreglo con la hora en BCD
+ */
 void Clock_Decrement_Minutes(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para incrementar la hora
+ *
+ * @param clock_time puntero al arreglo con la hora en BCD
+ */
 void Clock_Increment_Hours(clock_time_t * clock_time);
+
+/**
+ * @brief Funcion para decrementar la hora
+ *
+ * @param clock_time puntero al arreglo con la hora en BCD
+ */
 void Clock_Decrement_Hours(clock_time_t * clock_time);
 
 /**
