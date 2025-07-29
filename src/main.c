@@ -206,6 +206,8 @@ int main(void) {
     clock_time_t alarm_time = {0};
     Clock_Set_Time_Alarm(Clock, &alarm_time);
     Screen_Write_BCD(Board->Screen, value, CANT_DISPLAYS);
+    // Defino un puntero al horario de la alarma con delay
+    clock_time_t alarm_with_delay;
     // Defino un puntero que guarde la direccion de la hora mientras esta en otro proceso
     clock_time_t clock_actual_time;
     // Puntero a los botones que necesitan antirebote
@@ -334,21 +336,30 @@ int main(void) {
 
             //  Si la alarma esta activa y coincide el horario de la alarma con el del reloj se prende el led
             if (Clock_Alarm_Working(Clock, &alarm_time) && !alarm_sounding) {
+                // Indicador de alarma activa
                 Digital_Out_Activate(Board->Led_3);
                 alarm_sounding = true;
             }
 
             // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
             if (Button_Debounce(Board->Accept, &Accept) && alarm_sounding) {
-                Clock_Set_Alarm_Delay(Clock, 1);
+                alarm_with_delay = Clock_Set_Alarm_Delay(Clock, 1);
                 Digital_Out_Deactivate(Board->Led_3);
+                // indicador de snooze
                 Digital_Out_Activate(Board->Led_1);
                 alarm_sounding = false;
+            }
+            // Si la alarma con delay coincide con current_time entonces
+            if (Clock_Alarm_Working(Clock, &alarm_with_delay) && !alarm_sounding) {
+                Digital_Out_Deactivate(Board->Led_1);
+                // Indicador de alarma activa
+                Digital_Out_Activate(Board->Led_3);
+                alarm_sounding = true;
             }
 
             // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
             if (Button_Debounce(Board->Cancel, &Cancel) && alarm_sounding) {
-                Clock_Set_Alarm(Clock, true);
+                // Clock_Set_Alarm(Clock, true);
                 Digital_Out_Deactivate(Board->Led_3);
                 Digital_Out_Deactivate(Board->Led_1);
                 alarm_sounding = false;
@@ -356,6 +367,7 @@ int main(void) {
 
             // Si se presiona el boton de alarma por mas de 3 segundos pasa al estado set_alarma
             if (Delay_Button(Board->Set_Alarm, &F2_Delay, 2000, &Set_Alarm_flag)) {
+                // cambio de modo a setear la alarma
                 Change_Mode(Clock_Set_Alarm_Mode);
                 last_time = 0;
                 F2_Delay = 0;
