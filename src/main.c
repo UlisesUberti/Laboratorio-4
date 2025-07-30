@@ -70,7 +70,7 @@ typedef enum {
 
 /* === Private variable declarations =========================================================== */
 
-// Estructura para evitar el rebote del boton aceptar
+// Estructura para evitar el rebote del boton
 typedef struct {
     // variable para almacenar el tiempo en que el boton se presiono
     uint32_t button_time;
@@ -103,7 +103,7 @@ static bool Delay_Button(Digital_In_t Digital_In, uint32_t * start, uint32_t dur
  * @param Digital_In entrada digital (boton)
  * @param button puntero a la estructura del boton correspondiente
  * @return true si pasaron 10ms desde que se dejo de presionar el boton
- * @return false si no pasaron los 10ms desde que se dejo de presionar el boton
+ * @return false si no pasaron los ms desde que se dejo de presionar el boton
  */
 static bool Button_Debounce(Digital_In_t Digital_In, Debounce_t * button);
 
@@ -184,7 +184,7 @@ void Change_Mode(Clock_Mode_t Mode) {
         break;
     case Clock_Time_Mode:
         // Modo de funcionamiento normal del reloj
-        Flash_Point(Board->Screen, 1, 1, 10000);
+        Flash_Point(Board->Screen, 1, 1, 250);
         Display_Flash_Digits(Board->Screen, 0, 3, 0);
         break;
     case Clock_Set_Alarm_Mode:
@@ -283,7 +283,7 @@ int main(void) {
                 // cambia de estado a setear los minutos
                 Change_Mode(Clock_Set_Minutes_Mode);
                 // reinicio banderas
-                first_set = false;
+                // first_set = false;
                 F1_Delay = 0;
                 Set_Time_flag = false;
                 inactivity_time = 0;
