@@ -56,12 +56,15 @@ void Refresh_Task(void * args) {
         // Verifico que el mutex este liberado
         if (xSemaphoreTake(parameters->screen_Mutex, portMAX_DELAY)) {
             Screen_Refresh(parameters->Board->Screen);
+
             // libero el mutex
+
             Digital_Out_Toggle(parameters->Board->Led_2);
+
             xSemaphoreGive(parameters->screen_Mutex);
         }
+        vTaskDelay(pdMS_TO_TICKS(4));
         // bloqueo la tarea durante REFRESH ms con un periodo fijo
-        xTaskDelayUntil(&last_time, duration);
     }
 }
 /* === End of documentation ======================================================================================== */

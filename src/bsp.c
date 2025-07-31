@@ -298,4 +298,19 @@ Board_t Board_Create() {
     return Board;
 }
 
+void Init_Screen_Timer(void) {
+    // INICIALIZAMOS EL TIMER 2
+    Chip_TIMER_Init(LPC_TIMER2);
+    // EL TIMER CUENTA CADA 1us
+    Chip_TIMER_PrescaleSet(LPC_TIMER2, Chip_Clock_GetPeripheralClockRate() / 1000000 - 1);
+    // configuramos tal que cada 250us haya una interrupcion
+    Chip_TIMER_SetMatch(LPC_TIMER2, 1, 250);
+    // Para habilitar la interrupcion y reiniciarla se tiene
+    Chip_TIMER_MatchEnableInt(LPC_TIMER2, 1);
+    Chip_TIMER_ResetOnMatchEnable(LPC_TIMER2, 1);
+    // para arrancar el timer
+    Chip_TIMER_Enable(LPC_TIMER2);
+    // Para habilitar la interrupcion del timer:
+    // NVIC_EnableIRQ(TIMER2_IRQn);
+}
 /* === End of documentation ======================================================================================== */
