@@ -51,6 +51,7 @@
 #include "bsp.h"
 #include "clock.h"
 #include "DigitalOut.h"
+#include <stdlib.h>
 
 // Archivo de la tarea del reloj
 #include "ClockTask.h"
@@ -122,8 +123,11 @@ int main(void) {
     // Creo el objeto Reloj
     Clock = Clock_Create(100);
     // Defino una variable que tome la hora con la que se inicializo el reloj
-    // clock_time_t Init_Time = Clock_Time(Clock);
-
+    // clock_time_t Init_Time = {0};
+    // Clock_Set_Time(Clock, &Init_Time);
+    // uint8_t value[4] = {0};
+    // Clock_Get_Displays_Values(&Init_Time, value);
+    // Screen_Write_BCD(Board->Screen, value, CANT_DISPLAYS);
     // Declaramos un puntero a una cola
     // QueueHandle_t button_Queue;
     // Una cola es una estructura FIFO de datos --> 1ero en llegar es 1ero en salir
@@ -160,7 +164,7 @@ int main(void) {
         Refresh_Param->clock_events = clock_Events;
         Refresh_Param->screen_Mutex = screen_Mutex;
         result =
-            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 4, NULL);
+            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 6, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
@@ -231,7 +235,7 @@ int main(void) {
         Clock_Param->Board = Board;
         Clock_Param->clock_Events = clock_Events;
         Clock_Param->screen_Mutex = screen_Mutex;
-        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 2, NULL);
+        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 4, NULL);
     }
     // Si alguna de las tareas no puede crearse ponemos una baliza
     if (result != pdPASS) {

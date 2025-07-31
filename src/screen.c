@@ -30,6 +30,7 @@ SPDX-License-Identifier: MIT
 #include <stdbool.h>
 #include "screen.h"
 #include "poncho.h"
+#include "bsp.h"
 /* === Macros definitions ========================================================================================== */
 #ifndef SCREEN_MAX_DIGITS
 #define SCREEN_MAX_DIGITS 8
@@ -160,7 +161,6 @@ void Screen_Refresh(screen_t screen) {
             screen->Union_Count = (screen->Union_Count + 1) % screen->Flashing_Frequency;
         }
     }
-
     // Determinar si parpadean segmentos y/o puntos
 
     // parpadean los segmentos

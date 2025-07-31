@@ -32,7 +32,6 @@ SPDX-License-Identifier: MIT
 #include "clock.h"
 #include "bsp.h"
 #include "task.h"
-#include "queue.h"
 #include "semphr.h"
 
 /* === Header for C++ compatibility ================================================================================ */
@@ -50,6 +49,7 @@ extern "C" {
 
 // Declaramos un struct para pasarle luego los argumentos a la tarea
 typedef struct Alarm_Task_Args_s {
+    clock_time_t current_time;       // Puntero a la hora del reloj
     clock_t clock;                   // Puntero al objeto reloj
     Board_t Board;                   // Puntero al objeto placa
     EventGroupHandle_t clock_events; // grupo de eventos

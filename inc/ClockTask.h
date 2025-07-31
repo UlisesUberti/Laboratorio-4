@@ -47,7 +47,7 @@ extern "C" {
 #define CANT_DISPLAYS 4
 
 // Cantidad minima de stack asignada a la tarea
-#define Clock_Task_Stack_Size (2 * configMINIMAL_STACK_SIZE)
+#define Clock_Task_Stack_Size (3 * configMINIMAL_STACK_SIZE)
 
 // Evento para avisar que se activo la alarma
 #define ALARM_ON_EVENT (1 << 9)

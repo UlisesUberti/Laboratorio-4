@@ -50,14 +50,74 @@ typedef enum {
 static Clock_Mode_t actual_mode;
 
 /* === Private function declarations =============================================================================== */
+static void Change_Mode(Clock_Mode_t mode, screen_t Screen, SemaphoreHandle_t Mutex);
+/* === Private variable definitions* ================================================================================*/
+
+/* === Public variable definitions* =================================================================================*/
+
+/* === Private function definitions* ================================================================================*/
+static void Change_Mode(Clock_Mode_t mode, screen_t Screen, SemaphoreHandle_t Mutex) {
+    actual_mode = mode;
+    // Verifico que el mutex no esta ocupado
+    // Condicional con Mutex para verificar que la pantalla no esta siendo refrescada
+    // portMax_Delay indica que esperara todo el tiempo necesario hasta que se libere
+    switch (actual_mode) {
+    case Clock_Init_Mode:
+        Display_Flash_Digits(Screen, 0, 3, 200);
+        Flash_Point(Screen, 1, 1, 200);
+
+        break;
+    case Clock_Set_Minutes_Mode:
+        Display_Flash_Digits(Screen, 2, 3, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Set_Hours_Mode:
+        Display_Flash_Digits(Screen, 0, 1, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Time_Mode:
+        Display_Flash_Digits(Screen, 0, 4, 0);
+        Flash_Point(Screen, 1, 1, 1000);
+
+        break;
+    case Clock_Set_Alarm_Mode:
+        Display_Flash_Digits(Screen, 0, 3, 0);
+        All_Points_On(Screen);
+
+        break;
+    case Clock_Set_Minutes_Alarm_Mode:
+        Display_Flash_Digits(Screen, 2, 3, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Set_Hours_Alarm_Mode:
+        Display_Flash_Digits(Screen, 0, 1, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+
+    default:
+        break;
+    }
+    // libero el mutex
+}
+/* === Public function implementation* ==============================================================================*/
 
 void Clock_Task(void * args) {
     // Defino un puntero a la estrucutra con los argumentos de la tarea segun el parametro que se paso
     Clock_Task_Args_t param = args;
     // Defino eventos del tipo EventBits_t para esperar los eventos
     EventBits_t events;
-    // Defino un arreglo con el valor inicial de la hora del reloj
+    // Variable para llevar la hora del reloj
+    clock_time_t actual_time;
+    //  Defino un arreglo con el valor inicial de la hora del reloj
     uint8_t value[4] = {0};
+    Clock_Set_Time(param->clock, &actual_time);
+    Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
+    // defino un modo inicial del reloj
+    Change_Mode(Clock_Init_Mode, param->Board->Screen, param->screen_Mutex);
     // Bandera para la alarma
     bool alarm_sounding = false;
     // loop infinito
@@ -76,86 +136,40 @@ void Clock_Task(void * args) {
             Clock_New_Tick(param->clock);
         }
 
-        // Verifico que el mutex no esta ocupado
-        // Condicional con Mutex para verificar que la pantalla no esta siendo refrescada
-        // portMax_Delay indica que esperara todo el tiempo necesario hasta que se libere
-        if (xSemaphoreTake(param->screen_Mutex, portMAX_DELAY)) {
-            switch (actual_mode) {
-            case Clock_Init_Mode:
-                Display_Flash_Digits(param->Board->Screen, 0, 3, 200);
-                Flash_Point(param->Board->Screen, 1, 1, 200);
-
-                break;
-            case Clock_Set_Minutes_Mode:
-                Display_Flash_Digits(param->Board->Screen, 2, 3, 170);
-                Flash_Point(param->Board->Screen, 1, 1, 170);
-
-                break;
-            case Clock_Set_Hours_Mode:
-                Display_Flash_Digits(param->Board->Screen, 0, 1, 170);
-                Flash_Point(param->Board->Screen, 1, 1, 170);
-
-                break;
-            case Clock_Time_Mode:
-                Display_Flash_Digits(param->Board->Screen, 0, 4, 0);
-                Flash_Point(param->Board->Screen, 1, 1, 1000);
-
-                break;
-            case Clock_Set_Alarm_Mode:
-                Display_Flash_Digits(param->Board->Screen, 0, 3, 0);
-                All_Points_On(param->Board->Screen);
-
-                break;
-            case Clock_Set_Minutes_Alarm_Mode:
-                Display_Flash_Digits(param->Board->Screen, 2, 3, 170);
-                Flash_Point(param->Board->Screen, 1, 1, 170);
-
-                break;
-            case Clock_Set_Hours_Alarm_Mode:
-                Display_Flash_Digits(param->Board->Screen, 0, 1, 170);
-                Flash_Point(param->Board->Screen, 1, 1, 170);
-
-                break;
-
-            default:
-                break;
-            }
-            // libero el mutex
-            xSemaphoreGive(param->screen_Mutex);
-        }
-
         if (actual_mode == Clock_Init_Mode) {
             if ((events & SW_2_EVENT) && (events & SW_LONG_DURATION_EVENT)) {
                 // cambia el estado
-                actual_mode = Clock_Set_Minutes_Mode;
+                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
             }
         } else if (actual_mode == Clock_Set_Minutes_Mode) {
             if (events & SW_0_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Set_Hours_Mode;
+                Change_Mode(Clock_Set_Hours_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_1_EVENT) {
                 // Cambia el estado
-                actual_mode = Clock_Time_Mode;
+                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_5_EVENT) {
                 // Incrementa minutos
-                Clock_Increment_Minutes(&param->current_time);
+                Clock_Increment_Minutes(&actual_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementa minutos
-                Clock_Decrement_Minutes(&param->current_time);
+                Clock_Decrement_Minutes(&actual_time);
             }
         } else if (actual_mode == Clock_Set_Hours_Mode) {
             if (events & SW_0_EVENT) {
                 // Cambia el estado
-                actual_mode = Clock_Time_Mode;
+                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                // Actualiza la hora
+                Clock_Set_Time(param->clock, &actual_time);
             } else if (events & SW_1_EVENT) {
                 // Cambia el estado
-                actual_mode = Clock_Set_Minutes_Mode;
+                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_5_EVENT) {
                 // Incrementa horas
-                Clock_Increment_Hours(&param->current_time);
+                Clock_Increment_Hours(&actual_time);
             } else if (events & SW_4_EVENT) {
                 // Decrementa horas
-                Clock_Decrement_Hours(&param->current_time);
+                Clock_Decrement_Hours(&actual_time);
             }
         } else if (actual_mode == Clock_Time_Mode) {
             if (events & SW_0_EVENT) {
@@ -163,17 +177,19 @@ void Clock_Task(void * args) {
                 xEventGroupSetBits(param->clock_Events, ALARM_ON_EVENT);
                 Clock_Set_Alarm(param->clock, true);
                 Select_Point_On(param->Board->Screen, 3);
+
             } else if (events & SW_1_EVENT) {
                 // desactiva alarma
                 xEventGroupSetBits(param->clock_Events, ALARM_OFF_EVENT);
                 Clock_Set_Alarm(param->clock, false);
                 All_Points_Off(param->Board->Screen);
+
             } else if (events & SW_3_EVENT) {
                 // Cambia el estado
-                actual_mode = Clock_Set_Alarm_Mode;
+                Change_Mode(Clock_Set_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
             } else if ((events & SW_2_EVENT) && (events & SW_LONG_DURATION_EVENT)) {
                 // Cambia el estado
-                actual_mode = Clock_Set_Minutes_Mode;
+                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
             }
             // Si la hora actual y la hora de alarma coinciden y si no estaba sonando entonces se activa evento
             if (Clock_Alarm_Working(param->clock, &param->alarm_time) && !alarm_sounding) {
@@ -196,18 +212,18 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Set_Alarm_Mode) {
             if ((events & SW_2_EVENT) && (events & SW_LONG_DURATION_EVENT)) {
                 // Cambia el estado
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
+                Change_Mode(Clock_Set_Minutes_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_1_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Time_Mode;
+                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
             }
         } else if (actual_mode == Clock_Set_Minutes_Alarm_Mode) {
             if (events & SW_0_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Set_Hours_Alarm_Mode;
+                Change_Mode(Clock_Set_Hours_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_1_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Time_Mode;
+                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_5_EVENT) {
                 // Incrementar minutos
                 Clock_Increment_Minutes(&param->alarm_time);
@@ -218,10 +234,10 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Set_Hours_Alarm_Mode) {
             if (events & SW_0_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Time_Mode;
+                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_1_EVENT) {
                 // cambia el estado
-                actual_mode = Clock_Set_Minutes_Alarm_Mode;
+                Change_Mode(Clock_Set_Minutes_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
             } else if (events & SW_5_EVENT) {
                 // Incrementar minutos
                 Clock_Increment_Hours(&param->alarm_time);
@@ -237,22 +253,17 @@ void Clock_Task(void * args) {
             Clock_Get_Displays_Values(&param->alarm_time, value);
             Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
         } else if (actual_mode == Clock_Time_Mode) {
-            Clock_Get_Time(param->clock, &param->current_time);
+            actual_time = Clock_Time(param->clock);
             Clock_Get_Displays_Values(&param->current_time, value);
             Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
-        } else {
-            Clock_Get_Displays_Values(&param->current_time, value);
+        } else if (actual_mode == Clock_Init_Mode) {
+            Clock_Get_Displays_Values(&actual_time, value);
+            Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
+        } else if (actual_mode == Clock_Set_Hours_Mode || actual_mode == Clock_Set_Minutes_Mode) {
+            Clock_Get_Displays_Values(&actual_time, value);
             Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
         }
     }
 }
-
-/* === Private variable definitions* ================================================================================*/
-
-/* === Public variable definitions* =================================================================================*/
-
-/* === Private function definitions* ================================================================================*/
-
-/* === Public function implementation* ==============================================================================*/
 
 /* === End of documentation* ========================================================================================*/
