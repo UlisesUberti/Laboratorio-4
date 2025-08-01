@@ -51,7 +51,7 @@
 #define CANT_DISPLAYS 4
 
 // Tiempo para evitar rebote mecanico
-#define DEBOUNCE_TIME 120
+#define DEBOUNCE_TIME 150
 
 // Tiempo de inactividad
 #define TIME_OF_INACTIVITY 30000
@@ -307,7 +307,7 @@ int main(void) {
             // Si no se setean los minutos hasta que pasen 30 seg
             inactivity = Inactivity(&inactivity_time);
             if (inactivity) {
-                Change_Mode(Clock_Set_Hours_Mode);
+                Change_Mode(Clock_Time_Mode);
             }
 
             // Si se presiona Aceptar cambiamos al modo de configurar la hora
@@ -417,7 +417,7 @@ int main(void) {
             // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
             if (Button_Debounce(Board->Accept, &Accept) && alarm_sounding) {
                 // variable en la que guardamos el valor de la alarma con delay
-                alarm_with_delay = Clock_Set_Alarm_Delay(Clock, 1);
+                alarm_with_delay = Clock_Set_Alarm_Delay(Clock, 5);
                 // se apaga el indicador de alarma activa
                 Digital_Out_Deactivate(Board->Led_3);
                 // indicador de snooze
@@ -480,16 +480,19 @@ int main(void) {
             // Si se presiona para incrementar el tiempo
             if (Button_Debounce(Board->Increment, &Increment)) {
                 Clock_Increment_Minutes(&alarm_time);
+                inactivity_time = 0;
             }
 
             // Si se presiona para decrementar el tiempo
             if (Button_Debounce(Board->Decrement, &Decrement)) {
                 Clock_Decrement_Minutes(&alarm_time);
+                inactivity_time = 0;
             }
 
             // Si se presiona Aceptar cambiamos al modo de configurar la hora
             if (Button_Debounce(Board->Accept, &Accept)) {
                 Change_Mode(Clock_Set_Hours_Alarm_Mode);
+                inactivity_time = 0;
             }
             // Si no se setea el tiempo hasta que pasen 30 seg cambiamos de estado al anterior
             inactivity = Inactivity(&inactivity_time);
@@ -500,6 +503,7 @@ int main(void) {
             // Si se presiona cancelar pasamos al modo normal dependiendo de donde estabamos
             if (Button_Debounce(Board->Cancel, &Cancel)) {
                 Change_Mode(Clock_Set_Alarm_Mode);
+                inactivity_time = 0;
             }
 
         } else if (actual_mode == Clock_Set_Hours_Alarm_Mode) {
