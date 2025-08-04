@@ -48,23 +48,20 @@ SPDX-License-Identifier: MIT
 
 void Refresh_Task(void * args) {
     Refresh_Task_Args_t parameters = args;
-    TickType_t last_time, duration;
-    last_time = xTaskGetTickCount();
+    TickType_t duration;
+    TickType_t last_time = xTaskGetTickCount();
     // Duracion de REFRESH [ms]
-    duration = pdMS_TO_TICKS(REFRESH);
+    duration = pdMS_TO_TICKS(1);
     while (true) {
         // Verifico que el mutex este liberado
         if (xSemaphoreTake(parameters->screen_Mutex, portMAX_DELAY)) {
             Screen_Refresh(parameters->Board->Screen);
-
-            // libero el mutex
-
-            Digital_Out_Toggle(parameters->Board->Led_2);
-
-            xSemaphoreGive(parameters->screen_Mutex);
         }
-        vTaskDelay(pdMS_TO_TICKS(4));
-        // bloqueo la tarea durante REFRESH ms con un periodo fijo
+        Digital_Out_Toggle(parameters->Board->Led_2);
+        // libero el mutex
+        xSemaphoreGive(parameters->screen_Mutex);
+        vTaskDelayUntil(&last_time, duration);
+        //  bloqueo la tarea durante REFRESH ms con un periodo fijo
     }
 }
 /* === End of documentation ======================================================================================== */

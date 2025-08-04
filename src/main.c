@@ -125,7 +125,7 @@ int main(void) {
     // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board = Board_Create();
     // Le asiganmos al puntero a la pantalla la pantalla que creamos
-    screen = Board->Screen;
+    // screen = Board->Screen;
     // Creo el objeto Reloj
     Clock = Clock_Create(100);
     // Defino una variable que tome la hora con la que se inicializo el reloj
