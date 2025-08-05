@@ -57,7 +57,7 @@ void Button_Task(void * args) {
     // Bandera para determinar si se presiono
     bool Button_Pressed = false;
     while (true) {
-        if (Digital_In_Was_Activated(parameters->Switch) && !Button_Pressed) {
+        if (Digital_In_GetState(parameters->Switch) && !Button_Pressed) {
             // Si se presiono el boton
             Button_Pressed = true;
             // Utilizo una tarea del sistema operativo que lleva la cuenta en ticks del clock

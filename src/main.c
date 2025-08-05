@@ -52,12 +52,9 @@
 #include "clock.h"
 #include "DigitalOut.h"
 #include <stdlib.h>
-// Incluimos este archivo con el objetivo de realizar el refresco con un timer
-// Un timer es propio del hardware de la placa y genera interrupciones cada cierto tiempo
-#include "screen.h"
 
 // Archivo de la tarea del reloj
-// #include "ClockTask.h"
+#include "ClockTask.h"
 // Archivo de la tarea del refresco de pantalla
 #include "RefreshTask.h"
 // Archivo de Tick para controlar 1 seg de reloj
@@ -65,20 +62,19 @@
 // Archivo de la tarea para controlar la alarma
 // #include "AlarmTask.h"
 // Archivo de la tarea para detectar los botones
-// #include "ButtonTask.h"
+#include "ButtonTask.h"
 
 /* === Macros definitions ====================================================================== */
 
-// #define ACCEPT SW_0_EVENT    // Boton "Aceptar"
-// #define CANCEL SW_1_EVENT    // Boton "Cancelar"
-// #define SET_TIME SW_2_EVENT  // Boton "Setear Tiempo"
-// #define SET_ALARM SW_3_EVENT // Boton "Setear Alarma"
-// #define DECREMENT SW_4_EVENT // Boton "Decrementar valor"
-// #define INCREMENT SW_5_EVENT // Boton "Incrementar valor"
+#define ACCEPT SW_0_EVENT    // Boton "Aceptar"
+#define CANCEL SW_1_EVENT    // Boton "Cancelar"
+#define SET_TIME SW_2_EVENT  // Boton "Setear Tiempo"
+#define SET_ALARM SW_3_EVENT // Boton "Setear Alarma"
+#define DECREMENT SW_4_EVENT // Boton "Decrementar valor"
+#define INCREMENT SW_5_EVENT // Boton "Incrementar valor"
 
 /* === Private data type declarations ========================================================== */
-// puntero a la pantalla
-screen_t screen;
+
 // Puntero a al objeto Placa
 static Board_t Board;
 // Puntero al objeto Reloj
@@ -101,7 +97,7 @@ void Blinking(void * args);
 
 /* === Private function implementation ========================================================= */
 
-// Creamos una tarea de control
+// definimos una tarea de control
 void Blinking(void * args) {
     while (true) {
         Digital_Out_Toggle(Board->Led_2);
@@ -164,8 +160,72 @@ int main(void) {
         Refresh_Param->clock_events = clock_Events;
         Refresh_Param->screen_Mutex = screen_Mutex;
         result =
-            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 1, NULL);
+            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 3, NULL);
     }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Clock_Task_Args_t Clock_Param = malloc(sizeof(*Clock_Param));
+        Clock_Param->clock = Clock;
+        Clock_Param->Board = Board;
+        Clock_Param->clock_Events = clock_Events;
+        Clock_Param->screen_Mutex = screen_Mutex;
+        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 2, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = ACCEPT;
+        Sw_param->Switch = Board->Accept;
+        result = xTaskCreate(Button_Task, "Accept", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = SET_TIME;
+        Sw_param->Switch = Board->Set_Time;
+        result = xTaskCreate(Button_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = CANCEL;
+        Sw_param->Switch = Board->Cancel;
+        result = xTaskCreate(Button_Task, "Cancel", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = SET_ALARM;
+        Sw_param->Switch = Board->Set_Alarm;
+        result = xTaskCreate(Button_Task, "Set_Alarm", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = INCREMENT;
+        Sw_param->Switch = Board->Increment;
+        result = xTaskCreate(Button_Task, "Increment", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_bit = DECREMENT;
+        Sw_param->Switch = Board->Decrement;
+        result = xTaskCreate(Button_Task, "Decrement", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+
     // Si alguna de las tareas no puede crearse ponemos una baliza
     if (result != pdPASS) {
         xTaskCreate(Blinking, "Baliza", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);

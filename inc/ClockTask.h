@@ -70,8 +70,8 @@ typedef struct Clock_Task_Args_s {
     Board_t Board;                   // Puntero al objeto placa
     EventGroupHandle_t clock_Events; // Handle al grupo de eventos
     SemaphoreHandle_t screen_Mutex;  // Handle al mutex de la pantalla
-    QueueHandle_t button_Queue;      // Handle a la cola para los botones
-    uint8_t value[];                 // arreglo para la hora en BCD
+    // QueueHandle_t button_Queue;      // Handle a la cola para los botones
+    // uint8_t value[];                 // arreglo para la hora en BCD
 
 } * Clock_Task_Args_t;
 
