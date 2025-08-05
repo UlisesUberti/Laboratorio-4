@@ -58,7 +58,7 @@
 // Archivo de la tarea del refresco de pantalla
 #include "RefreshTask.h"
 // Archivo de Tick para controlar 1 seg de reloj
-// #include "TickTask.h"
+#include "TickTask.h"
 // Archivo de la tarea para controlar la alarma
 // #include "AlarmTask.h"
 // Archivo de la tarea para detectar los botones
@@ -160,7 +160,15 @@ int main(void) {
         Refresh_Param->clock_events = clock_Events;
         Refresh_Param->screen_Mutex = screen_Mutex;
         result =
-            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 3, NULL);
+            xTaskCreate(Refresh_Task, "Refresh", Refresh_Task_Stack_Size, Refresh_Param, tskIDLE_PRIORITY + 4, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Tick_Task_Args_t Tick_Param = malloc(sizeof(*Tick_Param));
+        Tick_Param->clock_events = clock_Events;
+        Tick_Param->tick_event = TICK_1_SECOND_EVENT;
+        Tick_Param->Board = Board;
+        result = xTaskCreate(Tick_Task, "Tick", Tick_Task_Stack_Size, Tick_Param, tskIDLE_PRIORITY + 3, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {

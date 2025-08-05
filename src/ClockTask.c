@@ -125,12 +125,13 @@ void Clock_Task(void * args) {
     // loop infinito
     while (true) {
         xEventGroupClearBits(param->clock_Events, SW_0_EVENT | SW_1_EVENT | SW_2_EVENT | SW_3_EVENT | SW_4_EVENT |
-                                                      SW_5_EVENT | SW_6_EVENT | SW_LONG_DURATION_EVENT);
+                                                      SW_5_EVENT | SW_6_EVENT | TICK_1_SECOND_EVENT |
+                                                      SW_LONG_DURATION_EVENT);
         // Espero que ocurra un evento
         // TICK_1_SECOND_EVENT
         events = xEventGroupWaitBits(param->clock_Events,
                                      SW_0_EVENT | SW_1_EVENT | SW_2_EVENT | SW_3_EVENT | SW_4_EVENT | SW_5_EVENT |
-                                         SW_6_EVENT | SW_LONG_DURATION_EVENT,
+                                         SW_6_EVENT | SW_LONG_DURATION_EVENT | TICK_1_SECOND_EVENT,
                                      pdTRUE, pdFALSE, portMAX_DELAY);
         // portMAX_DELAY indica que esperara todo el tiempo
         // pdTRUE indica que limpiara los bits una vez recibido el evento
@@ -349,6 +350,14 @@ void Clock_Task(void * args) {
         // Clock_Get_Displays_Values(&param->current_time, value);
         // Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
         // } else
+        if (actual_mode != Clock_Init_Mode) {
+            if (events & TICK_1_SECOND_EVENT) {
+                Clock_New_Tick(param->clock);
+                // Digital_Out_Toggle(param->Board->Led_1);
+                param->current_time = Clock_Time(param->clock);
+            }
+        }
+
         if (xSemaphoreTake(param->screen_Mutex, portMAX_DELAY)) {
 
             if (actual_mode == Clock_Init_Mode) {
@@ -357,8 +366,8 @@ void Clock_Task(void * args) {
                 Clock_Get_Displays_Values(&actual_time, value);
                 Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
             } else if (actual_mode == Clock_Time_Mode) {
-                actual_time = Clock_Time(param->clock);
-                Clock_Get_Displays_Values(&actual_time, value);
+                // actual_time = Clock_Time(param->clock);
+                Clock_Get_Displays_Values(&param->current_time, value);
                 Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);
             } else if ((actual_mode == Clock_Set_Alarm_Mode) || (actual_mode == Clock_Set_Minutes_Alarm_Mode) ||
                        (actual_mode == Clock_Set_Hours_Alarm_Mode)) {
@@ -368,7 +377,8 @@ void Clock_Task(void * args) {
             xSemaphoreGive(param->screen_Mutex);
         }
         xEventGroupClearBits(param->clock_Events, SW_0_EVENT | SW_1_EVENT | SW_2_EVENT | SW_3_EVENT | SW_4_EVENT |
-                                                      SW_5_EVENT | SW_6_EVENT | SW_LONG_DURATION_EVENT);
+                                                      SW_5_EVENT | SW_6_EVENT | TICK_1_SECOND_EVENT |
+                                                      SW_LONG_DURATION_EVENT);
         // else if (actual_mode == Clock_Set_Hours_Mode || actual_mode == Clock_Set_Minutes_Mode) {
         //  Clock_Get_Displays_Values(&actual_time, value);
         // Screen_Write_BCD(param->Board->Screen, value, CANT_DISPLAYS);

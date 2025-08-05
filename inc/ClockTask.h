@@ -68,6 +68,7 @@ typedef struct Clock_Task_Args_s {
     clock_time_t current_time;       // Puntero a la hora del reloj
     clock_time_t alarm_time;         // Puntero a la alarma del reloj
     Board_t Board;                   // Puntero al objeto placa
+    uint8_t tick;                    // Evento de tick
     EventGroupHandle_t clock_Events; // Handle al grupo de eventos
     SemaphoreHandle_t screen_Mutex;  // Handle al mutex de la pantalla
     // QueueHandle_t button_Queue;      // Handle a la cola para los botones

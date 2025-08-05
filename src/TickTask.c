@@ -57,7 +57,8 @@ void Tick_Task(void * args) {
         // Utilizo una funcion de FreeRTOS para que la tarea se bloquee un segundo con periodo fijo
         vTaskDelayUntil(&last_time, duration);
         // Una vez que paso 1 seg se dispara el evento
-        xEventGroupSetBits(parameters->clock_events, TICK_1_SECOND_EVENT);
+        Digital_Out_Toggle(parameters->Board->Led_1);
+        xEventGroupSetBits(parameters->clock_events, parameters->tick_event);
     }
 }
 /* === End of documentation ======================================================================================== */

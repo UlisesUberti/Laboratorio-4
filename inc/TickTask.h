@@ -44,7 +44,7 @@ extern "C" {
 /* === Public macros definitions =================================================================================== */
 
 // Realizo una mascara de bits correspondiente a los eventos
-#define TICK_1_SECOND_EVENT (1 << 8)
+#define TICK_1_SECOND_EVENT (1 << 10)
 
 // Cantidad minima de stack asignada a la tarea
 #define Tick_Task_Stack_Size (2 * configMINIMAL_STACK_SIZE)
@@ -54,7 +54,8 @@ extern "C" {
 // Declaramos un struct para pasarle luego los argumentos a la tarea
 typedef struct Tick_Task_Args_s {
     EventGroupHandle_t clock_events; // grupo de eventos
-    int tick_event;
+    uint16_t tick_event;
+    Board_t Board;
 } * Tick_Task_Args_t;
 
 /* === Public variable declarations ================================================================================ */
