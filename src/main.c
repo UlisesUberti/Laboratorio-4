@@ -184,54 +184,67 @@ int main(void) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
         // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = ACCEPT;
+        Sw_param->event_short_bit = ACCEPT;
         Sw_param->Switch = Board->Accept;
-        result = xTaskCreate(Button_Task, "Accept", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+        result = xTaskCreate(Button_Short_Task, "Accept", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    // if (result == pdPASS) {
+    //  Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+    // Sw_param->Board = Board;
+    //  Sw_param->clock_events = clock_Events;
+    // Sw_param->event_short_bit = SET_TIME;
+    // Sw_param->Switch = Board->Set_Time;
+    // result = xTaskCreate(Button_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    //}
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
         // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = SET_TIME;
-        Sw_param->Switch = Board->Set_Time;
-        result = xTaskCreate(Button_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
-    }
-    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
-    if (result == pdPASS) {
-        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
-        Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = CANCEL;
+        Sw_param->event_short_bit = CANCEL;
         Sw_param->Switch = Board->Cancel;
-        result = xTaskCreate(Button_Task, "Cancel", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+        result = xTaskCreate(Button_Short_Task, "Cancel", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
         // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = SET_ALARM;
+        Sw_param->event_long_bit = SW_LONG_3_EVENT;
         Sw_param->Switch = Board->Set_Alarm;
-        result = xTaskCreate(Button_Task, "Set_Alarm", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+        result =
+            xTaskCreate(Button_Long_Task, "Set_Alarm", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
         // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = INCREMENT;
+        Sw_param->event_short_bit = INCREMENT;
         Sw_param->Switch = Board->Increment;
-        result = xTaskCreate(Button_Task, "Increment", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+        result =
+            xTaskCreate(Button_Short_Task, "Increment", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
         // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
-        Sw_param->event_bit = DECREMENT;
+        Sw_param->event_short_bit = DECREMENT;
         Sw_param->Switch = Board->Decrement;
-        result = xTaskCreate(Button_Task, "Decrement", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+        result =
+            xTaskCreate(Button_Short_Task, "Decrement", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
+    }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    if (result == pdPASS) {
+        Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
+        // Sw_param->Board = Board;
+        Sw_param->clock_events = clock_Events;
+        Sw_param->event_long_bit = SW_LONG_EVENT;
+        Sw_param->Switch = Board->Set_Time;
+        result =
+            xTaskCreate(Button_Long_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
 
     // Si alguna de las tareas no puede crearse ponemos una baliza

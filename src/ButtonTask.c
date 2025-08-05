@@ -49,34 +49,43 @@ SPDX-License-Identifier: MIT
 
 /* === Public function implementation ============================================================================== */
 
-void Button_Task(void * args) {
+void Button_Short_Task(void * args) {
     // Defino un puntero a la estructura de la tarea con los argumentos que le pase
     Button_Task_Args_t parameters = args;
-    // Defino variables para un contador
-    TickType_t start = 0, duration;
-    // Bandera para determinar si se presiono
-    bool Button_Pressed = false;
+
     while (true) {
-        if (Digital_In_GetState(parameters->Switch) && !Button_Pressed) {
-            // Si se presiono el boton
-            Button_Pressed = true;
-            // Utilizo una tarea del sistema operativo que lleva la cuenta en ticks del clock
-            start = xTaskGetTickCount();
-        } else if (!Digital_In_GetState(parameters->Switch) && Button_Pressed) {
-            // Si se dejo de presionar el boton
-            Button_Pressed = false;
-            duration = xTaskGetTickCount() - start;
-            if (duration >= pdMS_TO_TICKS(LONG_DURATION_TIME)) {
-                // Si el boton se presiono durante un tiempo mayor a Long_duration
-                // Indicamos mediante un evento que fue de larga duracion
-                xEventGroupSetBits(parameters->clock_events, SW_LONG_DURATION_EVENT);
-                xEventGroupSetBits(parameters->clock_events, parameters->event_bit);
-            } else {
-                xEventGroupSetBits(parameters->clock_events, parameters->event_bit);
-            }
+        if (Digital_In_Was_Activated(parameters->Switch)) {
+            xEventGroupSetBits(parameters->clock_events, parameters->event_short_bit);
         }
         // Utilizamos un delay (espera pasiva) para evitar el rebote del boton
         vTaskDelay(pdMS_TO_TICKS(SW_SCAN_DELAY));
     }
 }
-/* === End of documentation ======================================================================================== */
+
+void Button_Long_Task(void * args) {
+    Button_Task_Args_t parameters = args;
+    // Bandera para determinar si se presiono
+    bool Button_Pressed = false;
+    bool Long_Event = false;
+    // Defino variables para un contador
+    TickType_t start = 0, duration, time_now;
+    while (true) {
+        if (Digital_In_GetState(parameters->Switch) && !Button_Pressed) {
+            Button_Pressed = true;
+            start = xTaskGetTickCount();
+            Long_Event = false;
+        } else if (Digital_In_GetState(parameters->Switch) && Button_Pressed && !Long_Event) {
+            time_now = xTaskGetTickCount();
+            duration = time_now - start;
+            if (duration >= pdMS_TO_TICKS(LONG_DURATION_TIME)) {
+                xEventGroupSetBits(parameters->clock_events, parameters->event_long_bit);
+                Long_Event = true;
+            }
+        } else if (!Digital_In_GetState(parameters->Switch) && Button_Pressed) {
+            Button_Pressed = false;
+        }
+        vTaskDelay(pdMS_TO_TICKS(SW_SCAN_DELAY));
+    }
+}
+/* === End of documentation ========================================================================================
+ */
