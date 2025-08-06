@@ -50,15 +50,18 @@ SPDX-License-Identifier: MIT
 void Alarm_Task(void * args) {
     Alarm_Task_Args_t parameters = args;
     EventBits_t events;
-    parameters->current_time = Clock_Time(parameters->clock);
+    // parameters->current_time = Clock_Time(parameters->clock);
     while (true) {
         events = xEventGroupWaitBits(parameters->clock_events,
                                      ALARM_DEACTIVATE_EVENT | ALARM_OFF_EVENT | ALARM_ON_EVENT | ALARM_SNOOZE_EVENT |
                                          ALARM_TIME_EVENT,
                                      pdTRUE, pdFALSE, portMAX_DELAY);
+        xEventGroupClearBits(parameters->clock_events, ALARM_DEACTIVATE_EVENT | ALARM_OFF_EVENT | ALARM_ON_EVENT |
+                                                           ALARM_SNOOZE_EVENT | ALARM_TIME_EVENT);
 
         if ((events & ALARM_TIME_EVENT)) {
             // Prende led indicando alarma activa
+            Digital_Out_Activate(parameters->Board->Led_2);
             Digital_Out_Activate(parameters->Board->Led_3);
         } else if ((events & ALARM_ON_EVENT) && (events & ALARM_SNOOZE_EVENT)) {
             // Apaga el led de la alarma activa
@@ -67,6 +70,9 @@ void Alarm_Task(void * args) {
             // Aapaga el led de la alarma activa
             Digital_Out_Deactivate(parameters->Board->Led_3);
         }
+        Digital_Out_Toggle(parameters->Board->Led_1);
+        xEventGroupClearBits(parameters->clock_events, ALARM_DEACTIVATE_EVENT | ALARM_OFF_EVENT | ALARM_ON_EVENT |
+                                                           ALARM_SNOOZE_EVENT | ALARM_TIME_EVENT);
     }
 }
 /* === End of documentation ======================================================================================== */

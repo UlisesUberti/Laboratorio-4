@@ -177,7 +177,12 @@ int main(void) {
         Clock_Param->Board = Board;
         Clock_Param->clock_Events = clock_Events;
         Clock_Param->screen_Mutex = screen_Mutex;
-        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 2, NULL);
+        //  Clock_Param->alarm_on = ALARM_ON_EVENT;
+        // Clock_Param->alarm_off = ALARM_OFF_EVENT;
+        // Clock_Param->alarm_snooze = ALARM_SNOOZE_EVENT;
+        // Clock_Param->alarm_in_time = ALARM_TIME_EVENT;
+        // Clock_Param->alarm_deactivate = ALARM_DEACTIVATE_EVENT;
+        result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 4, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
@@ -188,15 +193,6 @@ int main(void) {
         Sw_param->Switch = Board->Accept;
         result = xTaskCreate(Button_Short_Task, "Accept", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
-    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
-    // if (result == pdPASS) {
-    //  Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-    // Sw_param->Board = Board;
-    //  Sw_param->clock_events = clock_Events;
-    // Sw_param->event_short_bit = SET_TIME;
-    // Sw_param->Switch = Board->Set_Time;
-    // result = xTaskCreate(Button_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
-    //}
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
@@ -246,6 +242,14 @@ int main(void) {
         result =
             xTaskCreate(Button_Long_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
+    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    // if (result == pdPASS) {
+    // Alarm_Task_Args_t Alarm_param = malloc(sizeof(*Alarm_param));
+    //   Alarm_param->Board = Board;
+    // Alarm_param->clock = Clock;
+    // Alarm_param->clock_events = clock_Events;
+    //  result = xTaskCreate(Alarm_Task, "Alarm_Task", Alarm_Task_Stack_Size, Alarm_param, tskIDLE_PRIORITY + 2, NULL);
+    //}
 
     // Si alguna de las tareas no puede crearse ponemos una baliza
     if (result != pdPASS) {

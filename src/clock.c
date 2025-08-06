@@ -268,12 +268,16 @@ bool Clock_Set_Alarm(clock_t clock, bool Encendida) {
 clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
     // delay_time deben ser minutos
     clock->delay = delay_time;
+    clock_time_t init_alarm_time = clock->curren_time;
     // Si es el primer delay
-    if (clock->Delay_Active == false) {
-        memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
-    }
-    uint8_t Units_Minutes = clock->time_alarm_with_delay.time.minutes[0];
-    uint8_t Tens_Minutes = clock->time_alarm_with_delay.time.minutes[1];
+    // if (clock->Delay_Active == false) {
+    // memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
+    //   init_alarm_time = clock->alarm;
+    //} else {
+    //  init_alarm_time = clock->time_alarm_with_delay;
+    //}
+    uint8_t Units_Minutes = init_alarm_time.time.minutes[0];
+    uint8_t Tens_Minutes = init_alarm_time.time.minutes[1];
     // Escribo los minutos totales
     uint8_t Total_Minutes = Units_Minutes + Tens_Minutes * 10 + delay_time;
     // Operador % permite obtener los minutos, si se pasa de 60 tambien obtiene correctamente
@@ -285,10 +289,11 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
     clock->time_alarm_with_delay.time.minutes[1] = New_Minutes / 10;
 
     // hago los mismo para la hora
-    uint8_t Units_Hours = clock->time_alarm_with_delay.time.hours[0];
-    uint8_t Tens_Hours = clock->time_alarm_with_delay.time.hours[1];
+    uint8_t Units_Hours = init_alarm_time.time.hours[0];
+    uint8_t Tens_Hours = init_alarm_time.time.hours[1];
     uint8_t Total_Hours = Units_Hours + Tens_Hours * 10 + Pass_Hours;
     uint8_t New_Hour = Total_Hours % 24;
+
     clock->time_alarm_with_delay.time.hours[0] = New_Hour % 10;
     clock->time_alarm_with_delay.time.hours[1] = New_Hour / 10;
 
@@ -299,9 +304,7 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
 
 clock_time_t Clock_Alarm(clock_t clock) {
     clock_time_t alarm_time = {0};
-    if (clock->Alarm_Active) {
-        memcpy(alarm_time.bcd, &clock->alarm.bcd, sizeof(clock_time_t));
-    }
+    memcpy(alarm_time.bcd, &clock->alarm.bcd, sizeof(clock_time_t));
     return alarm_time;
 }
 

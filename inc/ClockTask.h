@@ -52,7 +52,7 @@ extern "C" {
 // Evento para avisar que se activo la alarma
 #define ALARM_ON_EVENT (1 << 9)
 // Evento para avisar que se desactivo la alarma
-#define ALARM_DEACTIVATE_EVENT (1 << 10)
+#define ALARM_DEACTIVATE_EVENT (1 << 14)
 // Evento que indica que la alarma deberia sonar
 #define ALARM_TIME_EVENT (1 << 11)
 // Evento que indica que la alarma se pospuso
@@ -71,8 +71,11 @@ typedef struct Clock_Task_Args_s {
     uint8_t tick;                    // Evento de tick
     EventGroupHandle_t clock_Events; // Handle al grupo de eventos
     SemaphoreHandle_t screen_Mutex;  // Handle al mutex de la pantalla
-    // QueueHandle_t button_Queue;      // Handle a la cola para los botones
-    // uint8_t value[];                 // arreglo para la hora en BCD
+    uint16_t alarm_on;
+    uint16_t alarm_off;
+    uint16_t alarm_snooze;
+    uint16_t alarm_deactivate;
+    uint16_t alarm_in_time;
 
 } * Clock_Task_Args_t;
 
