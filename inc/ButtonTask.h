@@ -90,6 +90,7 @@ void Button_Short_Task(void * args);
  * @param args puntero a los parametros a pasarle comoa argumento
  */
 void Button_Long_Task(void * args);
+
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

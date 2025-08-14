@@ -56,8 +56,9 @@ void Tick_Task(void * args) {
     while (true) {
         // Utilizo una funcion de FreeRTOS para que la tarea se bloquee un segundo con periodo fijo
         vTaskDelayUntil(&last_time, duration);
+        // Indicador de que avanza 1 seg
+        Digital_Out_Toggle(parameters->Board->Led_2);
         // Una vez que paso 1 seg se dispara el evento
-        // Digital_Out_Toggle(parameters->Board->Led_1);
         xEventGroupSetBits(parameters->clock_events, parameters->tick_event);
     }
 }

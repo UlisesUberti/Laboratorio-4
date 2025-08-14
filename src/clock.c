@@ -65,6 +65,7 @@ struct clock_s {
     uint16_t Clock_Ticks;               // Cantidad de pulsos por segundo
     clock_time_t curren_time;           // Hora actual del reloj
     bool valid;                         // Hora valida del reloj
+    Clock_Mode_t actual_mode;           // Indica el estado actual del reloj
 };
 
 /* === Private function declarations ===============================================================================*/
@@ -78,9 +79,10 @@ struct clock_s {
 clock_t Clock_Create(uint16_t Ticks_Per_Second) {
     static struct clock_s clock[1];
     memset(clock, 0, sizeof(struct clock_s));
-    clock->valid = false;        // Inicia en hora invalida
-    clock->Alarm_Active = false; // Inicia con alarma desactivada
-    clock->Delay_Active = false; // Inicia con delay desactivado
+    clock->valid = false;                 // Inicia en hora invalida
+    clock->Alarm_Active = false;          // Inicia con alarma desactivada
+    clock->Delay_Active = false;          // Inicia con delay desactivado
+    clock->actual_mode = Clock_Init_Mode; // Estado inicial
     return clock;
 }
 
@@ -100,14 +102,6 @@ bool Clock_Set_Time(clock_t clock, clock_time_t * result) {
         clock->valid = false;
     }
     // retorna una hora invalida o valida
-    return clock->valid;
-}
-
-bool Clock_Get_Time(clock_t clock, clock_time_t * new_time) {
-    //  memcpy para copiar los bytes del arreglo con la hora
-    if (clock->valid) {
-        memcpy(new_time, &clock->curren_time, sizeof(clock_time_t));
-    }
     return clock->valid;
 }
 
@@ -269,13 +263,6 @@ clock_time_t Clock_Set_Alarm_Delay(clock_t clock, uint8_t delay_time) {
     // delay_time deben ser minutos
     clock->delay = delay_time;
     clock_time_t init_alarm_time = clock->curren_time;
-    // Si es el primer delay
-    // if (clock->Delay_Active == false) {
-    // memcpy(&clock->time_alarm_with_delay, &clock->alarm, sizeof(clock_time_t));
-    //   init_alarm_time = clock->alarm;
-    //} else {
-    //  init_alarm_time = clock->time_alarm_with_delay;
-    //}
     uint8_t Units_Minutes = init_alarm_time.time.minutes[0];
     uint8_t Tens_Minutes = init_alarm_time.time.minutes[1];
     // Escribo los minutos totales
@@ -306,6 +293,54 @@ clock_time_t Clock_Alarm(clock_t clock) {
     clock_time_t alarm_time = {0};
     memcpy(alarm_time.bcd, &clock->alarm.bcd, sizeof(clock_time_t));
     return alarm_time;
+}
+
+void Change_Mode(clock_t clock, Clock_Mode_t mode, screen_t Screen) {
+    clock->actual_mode = mode;
+    switch (clock->actual_mode) {
+    case Clock_Init_Mode:
+        Display_Flash_Digits(Screen, 0, 3, 200);
+        Flash_Point(Screen, 1, 1, 200);
+
+        break;
+    case Clock_Set_Minutes_Mode:
+        Display_Flash_Digits(Screen, 2, 3, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Set_Hours_Mode:
+        Display_Flash_Digits(Screen, 0, 1, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Time_Mode:
+        Display_Flash_Digits(Screen, 0, 4, 0);
+        Flash_Point(Screen, 1, 1, 1000);
+
+        break;
+    case Clock_Set_Alarm_Mode:
+        Display_Flash_Digits(Screen, 0, 3, 0);
+        All_Points_On(Screen);
+
+        break;
+    case Clock_Set_Minutes_Alarm_Mode:
+        Display_Flash_Digits(Screen, 2, 3, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+    case Clock_Set_Hours_Alarm_Mode:
+        Display_Flash_Digits(Screen, 0, 1, 170);
+        Flash_Point(Screen, 1, 1, 170);
+
+        break;
+
+    default:
+        break;
+    }
+}
+
+Clock_Mode_t Clock_Mode(clock_t clock) {
+    return clock->actual_mode;
 }
 
 /* === Public function implementation ==============================================================================*/

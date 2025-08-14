@@ -57,7 +57,7 @@ void Button_Short_Task(void * args) {
         if (Digital_In_Was_Activated(parameters->Switch)) {
             xEventGroupSetBits(parameters->clock_events, parameters->event_short_bit);
         }
-        // Utilizamos un delay (espera pasiva) para evitar el rebote del boton
+        // Utilizamos un delay para evitar el rebote del boton
         vTaskDelay(pdMS_TO_TICKS(SW_SCAN_DELAY));
     }
 }

@@ -31,80 +31,21 @@ SPDX-License-Identifier: MIT
 #include <stdbool.h>
 #include "clock.h"
 #include "TickTask.h"
-#include "AlarmTask.h"
 
 /* === Macros definitions ========================================================================================== */
 
 /* === Private data type declarations ============================================================================== */
 
-typedef enum {
-    Clock_Init_Mode,
-    Clock_Time_Mode,
-    Clock_Set_Minutes_Mode,
-    Clock_Set_Hours_Mode,
-    Clock_Set_Alarm_Mode,
-    Clock_Set_Minutes_Alarm_Mode,
-    Clock_Set_Hours_Alarm_Mode,
-} Clock_Mode_t;
-
 static Clock_Mode_t actual_mode;
 
 /* === Private function declarations =============================================================================== */
-static void Change_Mode(Clock_Mode_t mode, screen_t Screen, SemaphoreHandle_t Mutex);
+
 /* === Private variable definitions* ================================================================================*/
 
 /* === Public variable definitions* =================================================================================*/
 
 /* === Private function definitions* ================================================================================*/
-static void Change_Mode(Clock_Mode_t mode, screen_t Screen, SemaphoreHandle_t Mutex) {
-    actual_mode = mode;
-    // Verifico que el mutex no esta ocupado
-    // Condicional con Mutex para verificar que la pantalla no esta siendo refrescada
-    // portMax_Delay indica que esperara todo el tiempo necesario hasta que se libere
-    if (xSemaphoreTake(Mutex, portMAX_DELAY)) {
-        switch (actual_mode) {
-        case Clock_Init_Mode:
-            Display_Flash_Digits(Screen, 0, 3, 200);
-            Flash_Point(Screen, 1, 1, 200);
 
-            break;
-        case Clock_Set_Minutes_Mode:
-            Display_Flash_Digits(Screen, 2, 3, 170);
-            Flash_Point(Screen, 1, 1, 170);
-
-            break;
-        case Clock_Set_Hours_Mode:
-            Display_Flash_Digits(Screen, 0, 1, 170);
-            Flash_Point(Screen, 1, 1, 170);
-
-            break;
-        case Clock_Time_Mode:
-            Display_Flash_Digits(Screen, 0, 4, 0);
-            Flash_Point(Screen, 1, 1, 1000);
-
-            break;
-        case Clock_Set_Alarm_Mode:
-            Display_Flash_Digits(Screen, 0, 3, 0);
-            All_Points_On(Screen);
-
-            break;
-        case Clock_Set_Minutes_Alarm_Mode:
-            Display_Flash_Digits(Screen, 2, 3, 170);
-            Flash_Point(Screen, 1, 1, 170);
-
-            break;
-        case Clock_Set_Hours_Alarm_Mode:
-            Display_Flash_Digits(Screen, 0, 1, 170);
-            Flash_Point(Screen, 1, 1, 170);
-
-            break;
-
-        default:
-            break;
-        }
-        xSemaphoreGive(Mutex);
-    }
-}
 /* === Public function implementation* ==============================================================================*/
 
 void Clock_Task(void * args) {
@@ -114,16 +55,21 @@ void Clock_Task(void * args) {
     EventBits_t events;
     // Variable para llevar la hora del reloj
     clock_time_t actual_time = {0};
+    // variable para llevar la hora de la alarma
     clock_time_t alarm_time = {0};
+    // variable para llevar la hora de la alarma con delay
     clock_time_t alarm_with_delay = {0};
+    // Seteamos un horario de alarma por defecto
     Clock_Set_Time_Alarm(param->clock, &alarm_time);
+    // Asignamos al parametro de la tarea la hora designada por defecto
     param->alarm_time = Clock_Alarm(param->clock);
     // Defino un arreglo con el valor inicial de la hora del reloj
     uint8_t value[4] = {0};
+    // Seteo el reloj en un horario inicial por defecto
     Clock_Set_Time(param->clock, &actual_time);
     Screen_Write_BCD(param->Board->Screen, value, 4);
-    // defino un modo inicial del reloj
-    Change_Mode(Clock_Init_Mode, param->Board->Screen, param->screen_Mutex);
+    // Defino un modo incial del reloj
+    Change_Mode(param->clock, Clock_Init_Mode, param->Board->Screen);
     // Bandera para la alarma
     bool alarm_sounding = false;
     // Contador para detectar inactividad
@@ -141,19 +87,19 @@ void Clock_Task(void * args) {
         // portMAX_DELAY indica que esperara todo el tiempo necesario un evento para ejecutar la tarea
         // pdTRUE indica que limpiara los bits una vez recibido el evento
         // pdFALSE indica que no esperara a que todos los eventos hayan ocurrido
-
+        actual_mode = Clock_Mode(param->clock);
         if (actual_mode == Clock_Init_Mode) {
             if ((events & SW_LONG_EVENT)) {
                 // cambia el estado
-                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Minutes_Mode, param->Board->Screen);
             }
         } else if (actual_mode == Clock_Set_Minutes_Mode) {
             if (events & SW_0_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Hours_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Hours_Mode, param->Board->Screen);
             } else if (events & SW_1_EVENT) {
-                //  cambia el estad
-                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                //  cambia el estado
+                Change_Mode(param->clock, Clock_Time_Mode, param->Board->Screen);
             } else if (events & SW_5_EVENT) {
                 // incrementa los minutos
                 Clock_Increment_Minutes(&actual_time);
@@ -164,13 +110,13 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Set_Hours_Mode) {
             if (events & SW_0_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Time_Mode, param->Board->Screen);
                 // Guardamos la hora configurada
                 Clock_Get_Displays_Values(&actual_time, value);
                 Clock_Set_Time(param->clock, &actual_time);
             } else if (events & SW_1_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Minutes_Mode, param->Board->Screen);
             } else if (events & SW_5_EVENT) {
                 // Incrementa la hora
                 Clock_Increment_Hours(&actual_time);
@@ -181,50 +127,46 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Time_Mode) {
             if ((events & SW_LONG_EVENT)) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Minutes_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Minutes_Mode, param->Board->Screen);
             }
             if ((events & SW_LONG_3_EVENT)) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Alarm_Mode, param->Board->Screen);
             }
             if (events & SW_0_EVENT) {
                 // activa alarma
-                // xEventGroupSetBits(param->clock_Events, param->alarm_on);
                 Clock_Set_Alarm(param->clock, true);
                 Select_Point_On(param->Board->Screen, 3);
             }
             if ((events & SW_1_EVENT) && !alarm_sounding) {
                 // desactiva alarma
-                // xEventGroupSetBits(param->clock_Events, param->alarm_off);
                 Clock_Set_Alarm(param->clock, false);
                 All_Points_Off(param->Board->Screen);
                 Flash_Point(param->Board->Screen, 1, 1, 1000);
             }
+            // Si la hora actual y la hora de alarma coinciden y si no estaba sonando entonces se activa evento
             if (Clock_Alarm_Working(param->clock, &alarm_time) && !alarm_sounding) {
-                // Si la hora actual y la hora de alarma coinciden y si no estaba sonando entonces se activa evento
-                // xEventGroupSetBits(param->clock_Events, param->alarm_in_time);
                 Digital_Out_Activate(param->Board->Led_3);
+                Digital_Out_Deactivate(param->Board->Led_1);
                 alarm_sounding = true;
             }
+            // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
             if ((events & SW_0_EVENT) && alarm_sounding) {
-                // Si suena la alarma y se presiona aceptar entonces se pospone 5 min
-                // xEventGroupSetBits(param->clock_Events, param->alarm_snooze);
-                alarm_with_delay = Clock_Set_Alarm_Delay(param->clock, 1);
+                alarm_with_delay = Clock_Set_Alarm_Delay(param->clock, 5);
                 Digital_Out_Activate(param->Board->Led_1);
                 Digital_Out_Deactivate(param->Board->Led_3);
                 alarm_sounding = false;
             }
+            // Si la alarma con delay coincide con current_time entonces se apaga el indicador de snooze
             if (Clock_Alarm_Working(param->clock, &alarm_with_delay) && !alarm_sounding) {
-                // Si la alarma con delay coincide con current_time entonces se apaga el indicador de snooze
                 Digital_Out_Deactivate(param->Board->Led_1);
                 // Indicador de alarma activa
                 Digital_Out_Activate(param->Board->Led_3);
                 // bandera que indica alarma sonando
                 alarm_sounding = true;
             }
+            // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
             if ((events & SW_1_EVENT) && alarm_sounding) {
-                // Si suena la alarma y se presiona cancelar entonces se apaga hasta el otro dia
-                // xEventGroupSetBits(param->clock_Events, param->alarm_deactivate);
                 Digital_Out_Deactivate(param->Board->Led_3);
                 Digital_Out_Deactivate(param->Board->Led_1);
                 Clock_Set_Alarm(param->clock, true);
@@ -233,20 +175,20 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Set_Alarm_Mode) {
             if ((events & SW_LONG_EVENT)) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Minutes_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Minutes_Alarm_Mode, param->Board->Screen);
             } else if (events & SW_1_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Time_Mode, param->Board->Screen);
                 All_Points_Off(param->Board->Screen);
                 Flash_Point(param->Board->Screen, 1, 1, 1000);
             }
         } else if (actual_mode == Clock_Set_Minutes_Alarm_Mode) {
             if (events & SW_0_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Hours_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Hours_Alarm_Mode, param->Board->Screen);
             } else if (events & SW_1_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Alarm_Mode, param->Board->Screen);
             } else if (events & SW_5_EVENT) {
                 // incrementa los minutos
                 Clock_Increment_Minutes(&alarm_time);
@@ -257,7 +199,7 @@ void Clock_Task(void * args) {
         } else if (actual_mode == Clock_Set_Hours_Alarm_Mode) {
             if (events & SW_0_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Time_Mode, param->Board->Screen);
                 //
                 Clock_Get_Displays_Values(&alarm_time, value);
                 // actualiza el horario de la alarma
@@ -266,9 +208,12 @@ void Clock_Task(void * args) {
                 param->alarm_time = Clock_Alarm(param->clock);
                 All_Points_Off(param->Board->Screen);
                 Flash_Point(param->Board->Screen, 1, 1, 1000);
+                // activa alarma
+                Clock_Set_Alarm(param->clock, true);
+                Select_Point_On(param->Board->Screen, 3);
             } else if (events & SW_1_EVENT) {
                 //  cambia el estado
-                Change_Mode(Clock_Set_Minutes_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Minutes_Alarm_Mode, param->Board->Screen);
             } else if (events & SW_5_EVENT) {
                 // Incrementa la hora
                 Clock_Increment_Hours(&alarm_time);
@@ -278,16 +223,20 @@ void Clock_Task(void * args) {
             }
         }
 
+        // Deteccion de Tick (1 segundo)
+
         if (actual_mode != Clock_Init_Mode) {
             if (events & TICK_1_SECOND_EVENT) {
                 // Avanzo 1 seg
                 Clock_New_Tick(param->clock);
                 // Indicador de Tick cada 1 seg
-                Digital_Out_Toggle(param->Board->Led_2);
+                // Digital_Out_Toggle(param->Board->Led_2);
                 // Actualizo el puntero a la hora actual del reloj
                 param->current_time = Clock_Time(param->clock);
             }
         }
+
+        // Escribo y actualizo displays
 
         if (xSemaphoreTake(param->screen_Mutex, portMAX_DELAY)) {
 
@@ -329,11 +278,11 @@ void Clock_Task(void * args) {
             if (actual_mode == Clock_Init_Mode || actual_mode == Clock_Set_Minutes_Mode ||
                 actual_mode == Clock_Set_Hours_Mode) {
                 // Cambio a modo de funcionamiento normal
-                Change_Mode(Clock_Time_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Time_Mode, param->Board->Screen);
                 last_iteraction = current_time;
             } else if (actual_mode == Clock_Set_Minutes_Alarm_Mode || actual_mode == Clock_Set_Hours_Alarm_Mode) {
                 // Cambio a modo de funcionamiento normal
-                Change_Mode(Clock_Set_Alarm_Mode, param->Board->Screen, param->screen_Mutex);
+                Change_Mode(param->clock, Clock_Set_Alarm_Mode, param->Board->Screen);
                 last_iteraction = current_time;
             }
         }
@@ -344,5 +293,4 @@ void Clock_Task(void * args) {
     }
 }
 
-/* === End of documentation*
- * ========================================================================================*/
+/* === End of documentation** ========================================================================================*/

@@ -32,7 +32,6 @@ SPDX-License-Identifier: MIT
 #include "clock.h"
 #include "bsp.h"
 #include "task.h"
-#include "queue.h"
 #include "semphr.h"
 
 /* === Header for C++ compatibility ================================================================================ */
@@ -71,11 +70,6 @@ typedef struct Clock_Task_Args_s {
     uint8_t tick;                    // Evento de tick
     EventGroupHandle_t clock_Events; // Handle al grupo de eventos
     SemaphoreHandle_t screen_Mutex;  // Handle al mutex de la pantalla
-    uint16_t alarm_on;
-    uint16_t alarm_off;
-    uint16_t alarm_snooze;
-    uint16_t alarm_deactivate;
-    uint16_t alarm_in_time;
 
 } * Clock_Task_Args_t;
 

@@ -42,9 +42,12 @@
 // Primero se incluye el freeRTOS
 #include "FreeRTOS.h"
 // Despues de haber incluido el freertos se incluye el archivo asociado a las tareas, colas, eventos..
+
+// Incluimos tareas
 #include "task.h"
-#include "queue.h"
+// Incluimos mutex
 #include "semphr.h"
+// Incluimos eventos
 #include "event_groups.h"
 
 #include <stdbool.h>
@@ -59,8 +62,6 @@
 #include "RefreshTask.h"
 // Archivo de Tick para controlar 1 seg de reloj
 #include "TickTask.h"
-// Archivo de la tarea para controlar la alarma
-// #include "AlarmTask.h"
 // Archivo de la tarea para detectar los botones
 #include "ButtonTask.h"
 
@@ -89,7 +90,7 @@ static clock_t Clock;
  *
  * @param args argumento de tarea del S.O.
  */
-void Blinking(void * args);
+static void Blinking(void * args);
 
 /* === Public variable definitions ============================================================= */
 
@@ -97,8 +98,7 @@ void Blinking(void * args);
 
 /* === Private function implementation ========================================================= */
 
-// definimos una tarea de control
-void Blinking(void * args) {
+static void Blinking(void * args) {
     while (true) {
         Digital_Out_Toggle(Board->Led_2);
         Digital_Out_Toggle(Board->Led_1);
@@ -109,31 +109,10 @@ void Blinking(void * args) {
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    // Ahora con freeRTOS vamos a separar las cosas en tareas
-    //  -Actualizar la hora cada 1seg
-    //  -Refrescar pantalla cada 1ms
-    //  -Detectar la pulsacion de botones --> Utiliza Eventos
-    //  Encender AlARMA --> utiliza Eventos
-    //  Habra comunicacion por medio de colas entre la deteccion de botones y la pantalla
-    //  Necesitamos el uso de mutex para la pantalla que es un recurso compartido
-    //  Ya no es necesario el uso del Systick
-
-    // Estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
+    // Puntero a la estructura con los punteros a las entradas y salidas digitales de la EDU-CIAA
     Board = Board_Create();
-    // Le asiganmos al puntero a la pantalla la pantalla que creamos
-    // screen = Board->Screen;
-    // Creo el objeto Reloj
+    // Puntero al objeto Reloj
     Clock = Clock_Create(100);
-    // Defino una variable que tome la hora con la que se inicializo el reloj
-    // clock_time_t Init_Time = {0};
-    // Clock_Set_Time(Clock, &Init_Time);
-    // uint8_t value[4] = {0};
-    // Clock_Get_Displays_Values(&Init_Time, value);
-    // Screen_Write_BCD(Board->Screen, value, CANT_DISPLAYS);
-    // Declaramos un puntero a una cola
-    // QueueHandle_t button_Queue;
-    // Una cola es una estructura FIFO de datos --> 1ero en llegar es 1ero en salir
-    // Para los botones necesitaremos saber cual se presiono y que tiempo
 
     // Declaramos un handle a un mutex
     SemaphoreHandle_t screen_Mutex;
@@ -153,8 +132,9 @@ int main(void) {
 
     // Ahora creamos las tareas
 
-    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
+    // Si el mutex y el conjunto de eventos se creo sin problema entonces creamos la primera tarea
     if (screen_Mutex && clock_Events) {
+        // Tarea de refresco, maxima prioridad
         Refresh_Task_Args_t Refresh_Param = malloc(sizeof(*Refresh_Param));
         Refresh_Param->Board = Board;
         Refresh_Param->clock_events = clock_Events;
@@ -164,6 +144,7 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de Tick
         Tick_Task_Args_t Tick_Param = malloc(sizeof(*Tick_Param));
         Tick_Param->clock_events = clock_Events;
         Tick_Param->tick_event = TICK_1_SECOND_EVENT;
@@ -172,22 +153,18 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea del Reloj
         Clock_Task_Args_t Clock_Param = malloc(sizeof(*Clock_Param));
         Clock_Param->clock = Clock;
         Clock_Param->Board = Board;
         Clock_Param->clock_Events = clock_Events;
         Clock_Param->screen_Mutex = screen_Mutex;
-        //  Clock_Param->alarm_on = ALARM_ON_EVENT;
-        // Clock_Param->alarm_off = ALARM_OFF_EVENT;
-        // Clock_Param->alarm_snooze = ALARM_SNOOZE_EVENT;
-        // Clock_Param->alarm_in_time = ALARM_TIME_EVENT;
-        // Clock_Param->alarm_deactivate = ALARM_DEACTIVATE_EVENT;
         result = xTaskCreate(Clock_Task, "Clock", Clock_Task_Stack_Size, Clock_Param, tskIDLE_PRIORITY + 4, NULL);
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Aceptar"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_short_bit = ACCEPT;
         Sw_param->Switch = Board->Accept;
@@ -195,8 +172,8 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Cancelar"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_short_bit = CANCEL;
         Sw_param->Switch = Board->Cancel;
@@ -204,8 +181,8 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Setear Alarma"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_long_bit = SW_LONG_3_EVENT;
         Sw_param->Switch = Board->Set_Alarm;
@@ -214,8 +191,8 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Incrementar"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_short_bit = INCREMENT;
         Sw_param->Switch = Board->Increment;
@@ -224,8 +201,8 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Decrementar"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_short_bit = DECREMENT;
         Sw_param->Switch = Board->Decrement;
@@ -234,25 +211,17 @@ int main(void) {
     }
     // Si la tarea anterior se creo sin problema entonces creamos la siguiente
     if (result == pdPASS) {
+        // Tarea de tecla "Setear tiempo"
         Button_Task_Args_t Sw_param = malloc(sizeof(*Sw_param));
-        // Sw_param->Board = Board;
         Sw_param->clock_events = clock_Events;
         Sw_param->event_long_bit = SW_LONG_EVENT;
         Sw_param->Switch = Board->Set_Time;
         result =
             xTaskCreate(Button_Long_Task, "Set_Time", Button_Task_Stack_Size, Sw_param, tskIDLE_PRIORITY + 1, NULL);
     }
-    // Si la tarea anterior se creo sin problema entonces creamos la siguiente
-    // if (result == pdPASS) {
-    // Alarm_Task_Args_t Alarm_param = malloc(sizeof(*Alarm_param));
-    //   Alarm_param->Board = Board;
-    // Alarm_param->clock = Clock;
-    // Alarm_param->clock_events = clock_Events;
-    //  result = xTaskCreate(Alarm_Task, "Alarm_Task", Alarm_Task_Stack_Size, Alarm_param, tskIDLE_PRIORITY + 2, NULL);
-    //}
-
     // Si alguna de las tareas no puede crearse ponemos una baliza
     if (result != pdPASS) {
+        // Tarea de control
         xTaskCreate(Blinking, "Baliza", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     }
 

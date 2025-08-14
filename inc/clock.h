@@ -26,8 +26,11 @@ SPDX-License-Identifier: MIT
  **/
 
 /* === Headers files inclusions ==================================================================================== */
+#include "FreeRTOS.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "semphr.h"
+#include "bsp.h"
 
 /* === Header for C++ compatibility ================================================================================ */
 
@@ -55,9 +58,37 @@ typedef union {
 // Puntero al objeto reloj a crear
 typedef struct clock_s * clock_t;
 
+// Estados del reloj
+typedef enum {
+    Clock_Init_Mode,              // Modo inicial del reloj
+    Clock_Time_Mode,              // Modo de funcionamiento normal
+    Clock_Set_Minutes_Mode,       // Modo para setear minutos en el funcionamiento normal
+    Clock_Set_Hours_Mode,         // Modo para setear hora en el funcionamiento normal
+    Clock_Set_Alarm_Mode,         // Modo para setear la alarma
+    Clock_Set_Minutes_Alarm_Mode, // Modo para setear minutos en el funcionamiento normal
+    Clock_Set_Hours_Alarm_Mode,   // Modo para setear hora en el funcionamiento normal
+} Clock_Mode_t;
+
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
+
+/**
+ * @brief Funcion para cambiar el estado del reloj
+ *
+ * @param clock puntero al objeto reloj
+ * @param mode modo del reloj
+ * @param Screen puntero a la pantalla
+ */
+void Change_Mode(clock_t clock, Clock_Mode_t mode, screen_t Screen);
+
+/**
+ * @brief Funcion para obtener el modo en que se encuentra el reloj
+ *
+ * @param clock puntero al objeto reloj
+ * @return Clock_Mode_t el estado en que se encuentra el reloj
+ */
+Clock_Mode_t Clock_Mode(clock_t clock);
 
 /**
  * @brief Funcion para crear el objeto reloj
@@ -66,16 +97,6 @@ typedef struct clock_s * clock_t;
  * @return clock_t puntero a la estructura creada
  */
 clock_t Clock_Create(uint16_t Ticks_Per_Second);
-
-/**
- * @brief Funcion para actulizar el estado de la hora del reloj
- *
- * @param clock objeto reloj
- * @param result esctructura con hora,minutos,segundos
- * @return true si es valida la hora
- * @return false si es invalida la hora
- */
-bool Clock_Get_Time(clock_t clock, clock_time_t * result);
 
 /**
  * @brief Funcion para obtener la hora del reloj
