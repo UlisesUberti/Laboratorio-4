@@ -51,8 +51,8 @@ extern "C" {
 #define SW_3_EVENT (1 << 3)      // Evento boton 3
 #define SW_4_EVENT (1 << 4)      // Evento boton 4
 #define SW_5_EVENT (1 << 5)      // Evento boton 5
-#define SW_LONG_3_EVENT (1 << 6) // Evento Presionado durante x tiempo el boton
-#define SW_LONG_EVENT (1 << 7)   // Evento Presionado durante x tiempo el boton
+#define SW_LONG_3_EVENT (1 << 6) // Evento presionado durante x tiempo el boton
+#define SW_LONG_EVENT (1 << 7)   // Evento presionado durante x tiempo el boton
 
 // Cantidad minima de stack asignada a la tarea
 #define Button_Task_Stack_Size (2 * configMINIMAL_STACK_SIZE)
@@ -79,7 +79,7 @@ typedef struct Button_Task_Args_s {
  * @brief Tarea del boton
  * Tarea que se encarga de avisar mediante un evento cuando un boton fue presionado
  * de corta duracion
- * @param args puntero a los parametros a pasarle comoa argumento
+ * @param args puntero a los parametros a pasarle como argumento
  */
 void Button_Short_Task(void * args);
 
@@ -87,7 +87,7 @@ void Button_Short_Task(void * args);
  * @brief Tarea del boton
  * Tarea que se encarga de avisar mediante un evento cuando un boton fue presionado
  * de larga duracion
- * @param args puntero a los parametros a pasarle comoa argumento
+ * @param args puntero a los parametros a pasarle como argumento
  */
 void Button_Long_Task(void * args);
 

@@ -32,7 +32,7 @@ SPDX-License-Identifier: MIT
 /* === Macros definitions ========================================================================================== */
 
 // Defino una variable para evitar el rebote del boton
-#define SW_SCAN_DELAY 100
+#define SW_SCAN_DELAY 100 //[ms]
 
 // defino el tiempo de duracion de un boton que permite cambiar al modo "set time"
 #define LONG_DURATION_TIME 3000 // [ms]

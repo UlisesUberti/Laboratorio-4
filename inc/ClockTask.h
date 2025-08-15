@@ -48,17 +48,6 @@ extern "C" {
 // Cantidad minima de stack asignada a la tarea
 #define Clock_Task_Stack_Size (3 * configMINIMAL_STACK_SIZE)
 
-// Evento para avisar que se activo la alarma
-#define ALARM_ON_EVENT (1 << 9)
-// Evento para avisar que se desactivo la alarma
-#define ALARM_DEACTIVATE_EVENT (1 << 14)
-// Evento que indica que la alarma deberia sonar
-#define ALARM_TIME_EVENT (1 << 11)
-// Evento que indica que la alarma se pospuso
-#define ALARM_SNOOZE_EVENT (1 << 12)
-// Evento que indica que se apago la alarma
-#define ALARM_OFF_EVENT (1 << 13)
-
 /* === Public data type declarations =============================================================================== */
 
 // Struct para pasarle como argumento a la tarea con los parametros necesarios

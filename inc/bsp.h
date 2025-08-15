@@ -84,8 +84,6 @@ typedef struct Board_s {
  */
 Board_t Board_Create(void);
 
-void Init_Screen_Timer(void);
-
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

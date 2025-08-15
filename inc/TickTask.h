@@ -54,8 +54,8 @@ extern "C" {
 // Declaramos un struct para pasarle luego los argumentos a la tarea
 typedef struct Tick_Task_Args_s {
     EventGroupHandle_t clock_events; // grupo de eventos
-    uint16_t tick_event;
-    Board_t Board;
+    uint16_t tick_event;             // Evento de tick
+    Board_t Board;                   // Puntero al objeto placa
 } * Tick_Task_Args_t;
 
 /* === Public variable declarations ================================================================================ */

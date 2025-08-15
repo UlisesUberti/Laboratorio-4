@@ -143,6 +143,7 @@ void Clock_Task(void * args) {
                 Clock_Set_Alarm(param->clock, false);
                 All_Points_Off(param->Board->Screen);
                 Flash_Point(param->Board->Screen, 1, 1, 1000);
+                Digital_Out_Deactivate(param->Board->Led_1);
             }
             // Si la hora actual y la hora de alarma coinciden y si no estaba sonando entonces se activa evento
             if (Clock_Alarm_Working(param->clock, &alarm_time) && !alarm_sounding) {
@@ -157,7 +158,8 @@ void Clock_Task(void * args) {
                 Digital_Out_Deactivate(param->Board->Led_3);
                 alarm_sounding = false;
             }
-            // Si la alarma con delay coincide con current_time entonces se apaga el indicador de snooze
+            // Si la alarma con delay coincide con current_time entonces se apaga el indicador de snooze y suena la
+            // alarma de nuevo
             if (Clock_Alarm_Working(param->clock, &alarm_with_delay) && !alarm_sounding) {
                 Digital_Out_Deactivate(param->Board->Led_1);
                 // Indicador de alarma activa
